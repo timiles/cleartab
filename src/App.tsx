@@ -22,7 +22,7 @@ export default function App() {
             <TrackFileInput onTrackChanged={setTrack} />
           </Stack>
         </ControlContainer>
-        {track && <TrackView track={track} />}
+        {track && <TrackView key={track.filename} track={track} />}
       </Box>
       <SnackbarProvider />
     </Container>

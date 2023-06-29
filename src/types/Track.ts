@@ -1,7 +1,6 @@
-import { TrackData } from './TrackData';
+import { SongsterrData } from 'utils/trackData/Songsterr/SongsterrData';
 
 export type Track = {
   filename: string;
-  instrument: string;
-  trackData: TrackData;
+  songsterrData: SongsterrData;
 };

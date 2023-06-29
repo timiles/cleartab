@@ -1,6 +1,10 @@
 import { Typography } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
+import { useEffect, useState } from 'react';
+import { TabData } from 'types/TabData';
 import { Track } from 'types/Track';
-import { convertTrackDataToTabData } from 'utils/tabUtils';
+import { TrackData } from 'types/TrackData';
+import { getWorkerPool } from 'workers/getWorkerPool';
 import ControlContainer from './ControlContainer';
 import TabView from './TabView';
 
@@ -10,10 +14,41 @@ interface IProps {
 
 export default function TrackView(props: IProps) {
   const {
-    track: { filename, instrument, trackData },
+    track: { filename, songsterrData },
   } = props;
 
-  const tabData = convertTrackDataToTabData(trackData);
+  const [status, setStatus] = useState<string>();
+  const [trackData, setTrackData] = useState<TrackData>();
+  const [tabData, setTabData] = useState<TabData>();
+
+  useEffect(() => {
+    const pool = getWorkerPool();
+    if (!trackData) {
+      setStatus('Processing track data...');
+      pool
+        .exec('convertSongsterrDataToTrackData', [songsterrData])
+        .then(setTrackData)
+        .catch((error) => {
+          enqueueSnackbar(`An error occurred: "${error}".`, { variant: 'error' });
+          pool.terminate();
+        });
+    } else if (!tabData) {
+      setStatus('Converting to tab...');
+      pool
+        .exec('convertTrackDataToTabData', [trackData])
+        .then((result) => {
+          setTabData(result);
+          setStatus(undefined);
+          enqueueSnackbar(`Successfully loaded "${filename}".`, { variant: 'success' });
+        })
+        .catch((error) => {
+          enqueueSnackbar(`An error occurred: "${error}".`, { variant: 'error' });
+        })
+        .then(() => {
+          pool.terminate();
+        });
+    }
+  }, [songsterrData, trackData, tabData]);
 
   return (
     <ControlContainer>
@@ -21,9 +56,10 @@ export default function TrackView(props: IProps) {
         {filename}
       </Typography>
       <Typography component="h3" variant="h5" mb={1}>
-        {instrument}
+        {songsterrData.instrument}
       </Typography>
-      <TabView tabData={tabData} />
+      {status && <pre>{status}</pre>}
+      {tabData && <TabView tabData={tabData} />}
     </ControlContainer>
   );
 }

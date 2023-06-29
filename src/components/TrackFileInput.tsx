@@ -13,10 +13,7 @@ import { enqueueSnackbar } from 'notistack';
 import { ChangeEvent, useState } from 'react';
 import { Track } from 'types/Track';
 import { SongsterrData } from 'utils/trackData/Songsterr/SongsterrData';
-import {
-  convertSongsterrDataToTrackData,
-  isValidSongsterrData,
-} from 'utils/trackData/Songsterr/songsterrUtils';
+import { isValidSongsterrData } from 'utils/trackData/Songsterr/songsterrUtils';
 import ExternalLink from './ExternalLink';
 
 interface IProps {
@@ -49,16 +46,7 @@ export default function TrackFileInput(props: IProps) {
         }
 
         const songsterrData = json as SongsterrData;
-
-        const track: Track = {
-          filename: file.name,
-          instrument: songsterrData.instrument,
-          trackData: convertSongsterrDataToTrackData(songsterrData),
-        };
-
-        onTrackChanged(track);
-
-        enqueueSnackbar(`Successfully loaded "${file.name}".`, { variant: 'success' });
+        onTrackChanged({ filename: file.name, songsterrData });
       });
     }
   };
