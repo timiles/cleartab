@@ -6,6 +6,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-pre {
+pre.tab {
   line-height: 1;
+  margin: 0.1rem 0 1.5rem;
+}
+
+pre.riff-order {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+pre.riff-label {
+  margin: 0;
 }

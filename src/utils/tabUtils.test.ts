@@ -1,6 +1,12 @@
 import { NoteModifier } from 'types/Note';
 import { TrackData } from 'types/TrackData';
-import { convertTrackDataToTabData, joinTabs } from './tabUtils';
+import {
+  convertTrackDataToTabData,
+  formatRiffLabel,
+  formatRiffOrderLabel,
+  formatRiffs,
+  joinTabs,
+} from './tabUtils';
 
 describe('tabUtils', () => {
   describe('convertTrackDataToTabData', () => {
@@ -384,6 +390,262 @@ C#|`.substring(1);
       const tabData = convertTrackDataToTabData(trackData);
       const tab = joinTabs(...tabData.barTabs);
       expect(tab).toBe(expectedTab);
+    });
+  });
+
+  describe('formatRiffOrderLabel', () => {
+    it('renders as expected', () => {
+      expect(formatRiffOrderLabel({ riffIndex: 0, times: 1 })).toBe('Riff 1');
+      expect(formatRiffOrderLabel({ riffIndex: 1, times: 1 })).toBe('Riff 2');
+    });
+
+    it('handles ending numbers', () => {
+      expect(formatRiffOrderLabel({ riffIndex: 0, endingIndex: 0, times: 1 })).toBe('Riff 1[1]');
+      expect(formatRiffOrderLabel({ riffIndex: 1, endingIndex: 3, times: 1 })).toBe('Riff 2[4]');
+    });
+
+    it('handles multiple times', () => {
+      expect(formatRiffOrderLabel({ riffIndex: 0, times: 2 })).toBe('Riff 1 (x2)');
+      expect(formatRiffOrderLabel({ riffIndex: 1, endingIndex: 3, times: 20 })).toBe(
+        'Riff 2[4] (x20)',
+      );
+    });
+  });
+
+  describe('formatRiffLabel', () => {
+    it('renders as expected', () => {
+      expect(formatRiffLabel(0)).toBe('[Riff 1]');
+      expect(formatRiffLabel(1)).toBe('[Riff 2]');
+    });
+  });
+
+  describe('formatRiffs', () => {
+    it('handles simple bar tabs', () => {
+      const barTabs = [
+        `
+--------|
+--------|
+--------|
+12345678|`.substring(1),
+        `
+--------|
+--------|
+87654321|
+--------|`.substring(1),
+      ];
+
+      const timeSignatureTab = `
+ :
+4:
+4:
+ :`.substring(1);
+      const riffsWithTimeSignatures = [
+        { bars: barTabs.map((barTab) => ({ barTab, timeSignatureTab })) },
+      ];
+
+      const order = [{ riffIndex: 0, times: 1 }];
+
+      const output = joinTabs(
+        ...formatRiffs(riffsWithTimeSignatures, order).flatMap((riff) => riff),
+      );
+
+      const expectedOutput = `
+| :--------|--------|
+|4:--------|--------|
+|4:--------|87654321|
+| :12345678|--------|`.substring(1);
+
+      expect(output).toStrictEqual(expectedOutput);
+    });
+
+    it('handles endings', () => {
+      const riffs = [
+        {
+          bars: ['1---|', '2---|'],
+          endings: [
+            ['3---|', '4---|'],
+            ['5---|', '6---|'],
+          ],
+        },
+        {
+          bars: ['7---|', '8---|'],
+          endings: [['9|'], ['9-|'], ['9--|'], ['9---|'], ['9----|']],
+        },
+      ];
+
+      const timeSignatureTab = '4/4:';
+      const riffsWithTimeSignatures = riffs.map((riff) => ({
+        bars: riff.bars.map((barTab) => ({ barTab, timeSignatureTab })),
+        endings: riff.endings.map((ending) =>
+          ending.map((barTab) => ({ barTab, timeSignatureTab })),
+        ),
+      }));
+
+      const order = [
+        { riffIndex: 0, endingIndex: 0, times: 1 },
+        { riffIndex: 0, endingIndex: 1, times: 1 },
+        { riffIndex: 1, endingIndex: 0, times: 1 },
+        { riffIndex: 1, endingIndex: 1, times: 1 },
+        { riffIndex: 1, endingIndex: 2, times: 1 },
+        { riffIndex: 1, endingIndex: 3, times: 1 },
+        { riffIndex: 1, endingIndex: 4, times: 1 },
+      ];
+
+      const output = joinTabs(
+        ...formatRiffs(riffsWithTimeSignatures, order).flatMap((riff) => riff),
+      );
+
+      const expectedOutput = `
+               [1.     ] [2.     ]            [1.][2.][3.][4.] [5. ] 
+‖4/4:1---|2---|3---|4---‖5---|6---|‖7---|8---|9‖  9-‖ 9--‖9---‖9----|`.substring(1);
+
+      expect(output).toStrictEqual(expectedOutput);
+    });
+
+    it('handles extra annotation line', () => {
+      const riffs = [
+        {
+          bars: ['1---|'],
+          endings: [
+            ['2---|'],
+            [
+              `
+.    
+3---|`.substring(1),
+            ],
+          ],
+        },
+      ];
+
+      const timeSignatureTab = '4/4:';
+      const riffsWithTimeSignatures = riffs.map((riff) => ({
+        bars: riff.bars.map((barTab) => ({ barTab, timeSignatureTab })),
+        endings: riff.endings.map((ending) =>
+          ending.map((barTab) => ({ barTab, timeSignatureTab })),
+        ),
+      }));
+
+      const order = [
+        { riffIndex: 0, endingIndex: 0, times: 1 },
+        { riffIndex: 0, endingIndex: 1, times: 1 },
+      ];
+
+      const output = joinTabs(
+        ...formatRiffs(riffsWithTimeSignatures, order).flatMap((riff) => riff),
+      );
+
+      const expectedOutput = `
+               [2.] 
+          [1.] .    
+‖4/4:1---|2---‖3---|`.substring(1);
+
+      expect(output).toStrictEqual(expectedOutput);
+    });
+
+    it('handles repeated bars', () => {
+      const bar1 = `
+.    
+1---|
+-1--|
+--1-|
+----|`.substring(1);
+
+      const bar2 = `
+---2|
+-.2-|
+-2--|
+-2--|`.substring(1);
+
+      const bar3 = `
+-|
+-|
+-|
+-|`.substring(1);
+
+      const riffs = [
+        {
+          bars: [bar1, bar1, bar1, bar2, bar2, bar3, bar3, bar1],
+          endings: [
+            [bar1, bar2],
+            [bar2, bar2],
+            [bar1, bar1],
+          ],
+        },
+      ];
+
+      const timeSignatureTab = ' :\n4:\n4:\n :';
+      const riffsWithTimeSignatures = riffs.map((riff) => ({
+        bars: riff.bars.map((barTab) => ({ barTab, timeSignatureTab })),
+        endings: riff.endings.map((ending) =>
+          ending.map((barTab) => ({ barTab, timeSignatureTab })),
+        ),
+      }));
+
+      const order = [
+        { riffIndex: 0, endingIndex: 0, times: 1 },
+        { riffIndex: 0, endingIndex: 1, times: 1 },
+        { riffIndex: 0, endingIndex: 2, times: 2 },
+        { riffIndex: 0, endingIndex: 0, times: 1 },
+      ];
+
+      const output = joinTabs(
+        ...formatRiffs(riffsWithTimeSignatures, order).flatMap((riff) => riff),
+      );
+
+      const expectedOutput = `
+   .                   .    [1.   ] [2.  ] [3.] 
+‖ :1---|%|%|---2|-|-|-|1---|%| ---2‖---2|-‖%| %|
+‖4:-1--|-|-|-.2-|-|-|%|-1--|-| -.2-‖-.2-|-‖-| -|
+‖4:--1-|-|-|-2--|%|-|-|--1-|-| -2--‖-2--|%‖-| -|
+‖ :----|-|-|-2--|%|-|-|----|-| -2--‖-2--|%‖-| -|`.substring(1);
+
+      expect(output).toStrictEqual(expectedOutput);
+    });
+
+    it('handles time signatures', () => {
+      const riffs = [
+        {
+          bars: [
+            { barTab: '1---|', timeSignatureTab: '4/4:' },
+            { barTab: '1--|', timeSignatureTab: '3/4:' },
+          ],
+          endings: [
+            [{ barTab: '2--|', timeSignatureTab: '3/4:' }],
+            [{ barTab: '3---|', timeSignatureTab: '4/4:' }],
+          ],
+        },
+        {
+          bars: [{ barTab: '4---|', timeSignatureTab: '4/4:' }],
+          endings: [
+            [{ barTab: '5---|', timeSignatureTab: '4/4:' }],
+            [{ barTab: '6---|', timeSignatureTab: '4/4:' }],
+          ],
+        },
+        {
+          bars: [{ barTab: '7---|', timeSignatureTab: '4/4:' }],
+          endings: [
+            [{ barTab: '8---|', timeSignatureTab: '4/4:' }],
+            [{ barTab: '9--|', timeSignatureTab: '3/4:' }],
+          ],
+        },
+      ];
+
+      const order = [
+        { riffIndex: 0, endingIndex: 0, times: 1 },
+        { riffIndex: 0, endingIndex: 1, times: 1 },
+        { riffIndex: 1, endingIndex: 0, times: 1 },
+        { riffIndex: 1, endingIndex: 1, times: 1 },
+        { riffIndex: 2, endingIndex: 0, times: 1 },
+        { riffIndex: 2, endingIndex: 1, times: 2 },
+      ];
+
+      const output = joinTabs(...formatRiffs(riffs, order).flatMap((riff) => riff));
+
+      const expectedOutput = `
+                  [1.][2.    ]       [1.] [2.]           [1.] [2.   ] 
+‖4/4:1---|3/4:1--|2--‖4/4:3---|‖4---|5---‖6---|‖4/4:7---|8---‖3/4:9--|`.substring(1);
+
+      expect(output).toStrictEqual(expectedOutput);
     });
   });
 });
