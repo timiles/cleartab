@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import { TabData } from 'types/TabData';
@@ -8,6 +8,7 @@ import { SequenceData, packItemData, unpackItemData } from 'utils/sequenceUtils'
 import { formatRiffs, getBarTabsWithTimeSignatures } from 'utils/tabUtils';
 import { getWorkerPool } from 'workers/getWorkerPool';
 import ControlContainer from './ControlContainer';
+import CopyToClipboardButton from './CopyToClipboardButton';
 import RiffsView from './RiffsView';
 import TabView from './TabView';
 
@@ -85,12 +86,24 @@ export default function TrackView(props: IProps) {
 
   return (
     <ControlContainer>
-      <Typography component="h2" variant="h4" mb={1}>
-        {filename}
-      </Typography>
-      <Typography component="h3" variant="h5" mb={1}>
-        {songsterrData.instrument}
-      </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        mb={2}
+        spacing={1}
+      >
+        <Stack direction="column">
+          <Typography component="h2" variant="h4" mb={1}>
+            {filename}
+          </Typography>
+          <Typography component="h3" variant="h5" mb={1}>
+            {songsterrData.instrument}
+          </Typography>
+        </Stack>
+        {tabData && riffs && order && (
+          <CopyToClipboardButton tuningTab={tabData.tuningTab} riffs={riffs} order={order} />
+        )}
+      </Stack>
       {status && <pre>{status}</pre>}
       {tabData && riffs && order && (
         <RiffsView tuning={tabData.tuningTab} riffs={riffs} order={order} />

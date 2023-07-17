@@ -6,6 +6,7 @@ import {
   formatRiffOrderLabel,
   formatRiffs,
   joinTabs,
+  renderRiffs,
 } from './tabUtils';
 
 describe('tabUtils', () => {
@@ -646,6 +647,180 @@ C#|`.substring(1);
 ‖4/4:1---|3/4:1--|2--‖4/4:3---|‖4---|5---‖6---|‖4/4:7---|8---‖3/4:9--|`.substring(1);
 
       expect(output).toStrictEqual(expectedOutput);
+    });
+  });
+
+  describe('renderRiffs', () => {
+    const defaultRiffs = [
+      ['|4/4:1---|', '2---|', '3---|', '4---|'],
+      ['|5---|', '6---|', '7---|', '8---|'],
+    ];
+
+    const defaultOrder = [
+      { riffIndex: 0, times: 1 },
+      { riffIndex: 1, times: 2 },
+    ];
+
+    it('renders riffs as expected', () => {
+      const output = renderRiffs('E|', defaultRiffs, defaultOrder, {
+        maxLineLength: 42,
+      });
+
+      const expectedOutput = `
+  [Riff 1]                 [Riff 2]   
+E||4/4:1---|2---|3---|4---||5---|6---|
+
+7---|8---|
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
+    });
+
+    it('handles minimal line length', () => {
+      const output = renderRiffs('E|', defaultRiffs, defaultOrder, {
+        maxLineLength: 1,
+      });
+
+      const expectedOutput = `
+E|
+
+[Riff 1]  
+|4/4:1---|
+
+2---|
+
+3---|
+
+4---|
+
+[Riff 2]
+|5---|  
+
+6---|
+
+7---|
+
+8---|
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
+    });
+
+    it('handles hideTuning', () => {
+      const output = renderRiffs('E|', defaultRiffs, defaultOrder, {
+        maxLineLength: 42,
+        hideTuning: true,
+      });
+
+      const expectedOutput = `
+[Riff 1]                 [Riff 2]        
+|4/4:1---|2---|3---|4---||5---|6---|7---|
+
+8---|
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
+    });
+
+    it('handles avoidSplittingRiffs', () => {
+      const output = renderRiffs('E|', defaultRiffs, defaultOrder, {
+        maxLineLength: 42,
+        avoidSplittingRiffs: true,
+      });
+
+      const expectedOutput = `
+  [Riff 1]                 
+E||4/4:1---|2---|3---|4---|
+
+[Riff 2]             
+|5---|6---|7---|8---|
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
+    });
+
+    it('handles avoidSplittingRiffs when riff moves onto new line and is also split', () => {
+      // Last bar is long enough that it will:
+      // - cause Riff 2 to move to the 2nd line,
+      // - need to be split onto the 3rd line too.
+      const riffs = [['|4/4:1---|'], ['|2---|', '1234123412341234|']];
+
+      const output = renderRiffs('E|', riffs, defaultOrder, {
+        maxLineLength: 20,
+        avoidSplittingRiffs: true,
+      });
+
+      const expectedOutput = `
+  [Riff 1]  
+E||4/4:1---|
+
+[Riff 2]
+|2---|  
+
+1234123412341234|
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
+    });
+
+    it('handles riff label longer than bar', () => {
+      const riffs = [
+        ['|4/4:1|', '2|', '3|', '4|'],
+        ['|5|', '6|', '7|', '8|'],
+      ];
+
+      // Max line length of 24 should fit all bars
+      // - this also tests that we haven't overcompensated for the length of the riff label
+      const output = renderRiffs('E|', riffs, defaultOrder, {
+        maxLineLength: 24,
+      });
+
+      const expectedOutput = `
+  [Riff 1]     [Riff 2] 
+E||4/4:1|2|3|4||5|6|7|8|
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
+    });
+
+    it('handles riff label longer than riff', () => {
+      const riffs = [['|1|'], ['|2|', '3|', '4|']];
+
+      const output = renderRiffs('E|', riffs, defaultOrder, {
+        maxLineLength: 42,
+      });
+
+      const expectedOutput = `
+  [Riff 1][Riff 2]
+E||1|     |2|3|4| 
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
+    });
+
+    it('handles riff label causing line to exceed max length', () => {
+      // Max line length of 32 is enough for bar 5, but not enough for [Riff 2]
+      const output = renderRiffs('E|', defaultRiffs, defaultOrder, {
+        maxLineLength: 32,
+      });
+
+      const expectedOutput = `
+  [Riff 1]                 
+E||4/4:1---|2---|3---|4---|
+
+[Riff 2]             
+|5---|6---|7---|8---|
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
     });
   });
 });

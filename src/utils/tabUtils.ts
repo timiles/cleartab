@@ -472,3 +472,96 @@ export function renderOrder(
 ): string {
   return `Order: ${order.map(formatRiffOrderLabel).join(', ')}`;
 }
+
+export function renderRiffs(
+  tuningTab: string,
+  riffs: ReadonlyArray<ReadonlyArray<string>>,
+  order: ReadonlyArray<{ riffIndex: number; endingIndex?: number; times: number }>,
+  options?: {
+    maxLineLength?: number;
+    hideTuning?: boolean;
+    avoidSplittingRiffs?: boolean;
+  },
+): string {
+  const { maxLineLength = 84, hideTuning = false, avoidSplittingRiffs = false } = options ?? {};
+
+  const tuningTabIfShown = hideTuning ? '' : tuningTab;
+
+  // Calculate which bars will be at the start of each system in the rendered tab
+  const systemStarts = new Array({ riffIndex: 0, barIndex: 0 });
+
+  let currentLineLength = getTabLineLength(tuningTabIfShown);
+
+  riffs.forEach((bars, riffIndex) => {
+    let currentRiffBarsLength = 0;
+    const riffLabelLength = formatRiffLabel(riffIndex).length;
+
+    bars.forEach((barTab, barIndex) => {
+      const barLength = getTabLineLength(barTab);
+      currentRiffBarsLength += barLength;
+
+      // The riff label can hang over from earlier bars. Check which is longer, hangover or bar
+      const nextItemLength = Math.max(riffLabelLength - currentRiffBarsLength, barLength);
+
+      if (currentLineLength + nextItemLength > maxLineLength) {
+        // Avoid splitting riffs if this riff is not already split from the previous system
+        if (avoidSplittingRiffs && riffIndex !== systemStarts.at(-1)?.riffIndex) {
+          // Put this riff onto the next line
+          systemStarts.push({ riffIndex, barIndex: 0 });
+          currentLineLength = currentRiffBarsLength;
+        }
+        // Check again in case the above condition changed things
+        if (currentLineLength + nextItemLength > maxLineLength) {
+          systemStarts.push({ riffIndex, barIndex });
+          currentLineLength = barLength;
+        }
+      } else {
+        currentLineLength += barLength;
+      }
+    });
+  });
+
+  const systemTabs = new Array<string>();
+  for (let systemIndex = 0; systemIndex < systemStarts.length; systemIndex += 1) {
+    const currentSystemStart = systemStarts[systemIndex];
+    const nextSystemStart = systemStarts[systemIndex + 1];
+
+    const currentSystemTabs = new Array<string>();
+
+    if (systemIndex === 0) {
+      currentSystemTabs.push(tuningTabIfShown);
+    }
+
+    const startRiffIndex = currentSystemStart.riffIndex;
+    const endRiffIndex = nextSystemStart?.riffIndex ?? riffs.length - 1;
+
+    for (let riffIndex = startRiffIndex; riffIndex <= endRiffIndex; riffIndex += 1) {
+      // These indexes are used with slice, so endBarIndex is exclusive
+      const startBarIndex = riffIndex === startRiffIndex ? currentSystemStart.barIndex : 0;
+      const endBarIndex = riffIndex === endRiffIndex ? nextSystemStart?.barIndex : undefined;
+
+      if (endBarIndex === undefined || endBarIndex > startBarIndex) {
+        const bars = riffs[riffIndex].slice(startBarIndex, endBarIndex);
+        const renderRiffLabel = currentSystemStart.barIndex === 0 || riffIndex > startRiffIndex;
+        currentSystemTabs.push(
+          `${renderRiffLabel ? `${formatRiffLabel(riffIndex)}\n` : ''}${joinTabs(...bars)}`,
+        );
+      }
+    }
+
+    systemTabs.push(joinTabs(...currentSystemTabs));
+  }
+
+  systemTabs.push(renderOrder(order));
+  return systemTabs.join('\n\n');
+}
+
+export function getRenderedRiffsMaxLineLength(renderedRiffs: string) {
+  return Math.max(
+    ...renderedRiffs
+      .split('\n')
+      // Ignore last line (order), which can wrap
+      .slice(0, -1)
+      .map((line) => line.length),
+  );
+}
