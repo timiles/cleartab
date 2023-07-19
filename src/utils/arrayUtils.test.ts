@@ -1,4 +1,4 @@
-import { areArraysEqual, isArrayNotEmpty } from './arrayUtils';
+import { areArraysEqual, isArrayNotEmpty, range } from './arrayUtils';
 
 describe('arrayUtils', () => {
   describe('isArrayNotEmpty', () => {
@@ -34,6 +34,12 @@ describe('arrayUtils', () => {
 
     it('returns true if arrays have same items', () => {
       expect(areArraysEqual([1, 2], [1, 2], [1, 2])).toBe(true);
+    });
+  });
+
+  describe('range', () => {
+    it('returns range as expected', () => {
+      expect(range(5)).toStrictEqual([0, 1, 2, 3, 4]);
     });
   });
 });

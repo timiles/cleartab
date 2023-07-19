@@ -1,4 +1,4 @@
-import { areArraysEqual, isArrayNotEmpty } from './arrayUtils';
+import { areArraysEqual, isArrayNotEmpty, range } from './arrayUtils';
 
 const SEQUENCE_DATA_DELIMITER = '🎸';
 
@@ -120,9 +120,9 @@ export function findSequences<T>(inputItems: ReadonlyArray<T>): SequenceData<T> 
     const currentSequence = sequences[sequenceIndex];
     for (let size = 1; size < currentSequence.items.length; size += 1) {
       if (currentSequence.items.length % size === 0) {
-        const subsequences = new Array(currentSequence.items.length / size)
-          .fill(0)
-          .map((_, index) => currentSequence.items.slice(index * size, (index + 1) * size));
+        const subsequences = range(currentSequence.items.length / size).map((index) =>
+          currentSequence.items.slice(index * size, (index + 1) * size),
+        );
 
         if (areArraysEqual(...subsequences)) {
           const subsequenceItems = subsequences[0];

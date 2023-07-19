@@ -24,3 +24,10 @@ export function areArraysEqual<T>(...arrays: Array<Array<T>>) {
 
   return true;
 }
+
+/**
+ * Generates an array of numbers from 0 to `size` exclusive.
+ */
+export function range(size: number): ReadonlyArray<number> {
+  return new Array(size).fill(null).map((_, i) => i);
+}
