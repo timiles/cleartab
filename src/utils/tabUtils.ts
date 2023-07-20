@@ -281,14 +281,17 @@ function formatEndingLabel(
   return '';
 }
 
+function isNote(char: string): boolean {
+  return char >= '0' && char <= '9';
+}
+
 function formatRepeatedBar(barTab: string) {
   const barLines = barTab.split('\n').filter((line) => line.endsWith(BAR_LINE));
 
-  const isNote = (char: string) => char >= '0' && char <= '9';
   const indexOfFirstNote = Math.min(
     ...barLines
       .map((line) => line.split(BAR_LINE))
-      .map(([notes]) => notes.split('').findIndex(isNote))
+      .map(([line]) => Array.from(line).findIndex(isNote))
       .filter((index) => index >= 0),
   );
 
@@ -319,6 +322,7 @@ function replaceRepeatedBars(
   for (let barIndex = 1; barIndex < returnRiff.bars.length; barIndex += 1) {
     const bar = returnRiff.bars[barIndex];
     if (
+      Array.from(bar.barTab).findIndex(isNote) >= 0 &&
       bar.barTab === previousDistinctBar?.barTab &&
       bar.timeSignatureTab === previousDistinctBar.timeSignatureTab
     ) {

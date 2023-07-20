@@ -557,15 +557,28 @@ C#|`.substring(1);
 -2--|
 -2--|`.substring(1);
 
+      // The following bars should not be replaced with repeat symbols
       const bar3 = `
 -|
 -|
 -|
 -|`.substring(1);
 
+      const bar4 = `
+--|
+--|
+1~|
+--|`.substring(1);
+
+      const bar5 = `
+-|
+-|
+~|
+-|`.substring(1);
+
       const riffs = [
         {
-          bars: [bar1, bar1, bar1, bar2, bar2, bar3, bar3, bar1],
+          bars: [bar1, bar1, bar1, bar2, bar2, bar3, bar3, bar4, bar5, bar5, bar1],
           endings: [
             [bar1, bar2],
             [bar2, bar2],
@@ -594,11 +607,11 @@ C#|`.substring(1);
       );
 
       const expectedOutput = `
-   .                   .    [1.   ] [2.  ] [3.] 
-‖ :1---|%|%|---2|-|-|-|1---|%| ---2‖---2|-‖%| %|
-‖4:-1--|-|-|-.2-|-|-|%|-1--|-| -.2-‖-.2-|-‖-| -|
-‖4:--1-|-|-|-2--|%|-|-|--1-|-| -2--‖-2--|%‖-| -|
-‖ :----|-|-|-2--|%|-|-|----|-| -2--‖-2--|%‖-| -|`.substring(1);
+   .                          .    [1.   ] [2.  ] [3.] 
+‖ :1---|%|%|---2|-|-|-|--|-|-|1---|%| ---2‖---2|-‖%| %|
+‖4:-1--|-|-|-.2-|-|-|-|--|-|-|-1--|-| -.2-‖-.2-|-‖-| -|
+‖4:--1-|-|-|-2--|%|-|-|1~|~|~|--1-|-| -2--‖-2--|%‖-| -|
+‖ :----|-|-|-2--|%|-|-|--|-|-|----|-| -2--‖-2--|%‖-| -|`.substring(1);
 
       expect(output).toStrictEqual(expectedOutput);
     });
