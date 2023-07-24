@@ -502,10 +502,11 @@ export function renderRiffs(
 
     bars.forEach((barTab, barIndex) => {
       const barLength = getTabLineLength(barTab);
-      currentRiffBarsLength += barLength;
 
       // The riff label can hang over from earlier bars. Check which is longer, hangover or bar
       const nextItemLength = Math.max(riffLabelLength - currentRiffBarsLength, barLength);
+
+      currentRiffBarsLength += barLength;
 
       if (currentLineLength + nextItemLength > maxLineLength) {
         // Avoid splitting riffs if this riff is not already split from the previous system

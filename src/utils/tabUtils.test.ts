@@ -819,9 +819,9 @@ Order: Riff 1, Riff 2 (x2)`.substring(1);
     });
 
     it('handles riff label causing line to exceed max length', () => {
-      // Max line length of 32 is enough for bar 5, but not enough for [Riff 2]
+      // Max line length of 34 is enough for bar 5, but not enough for [Riff 2]
       const output = renderRiffs('E|', defaultRiffs, defaultOrder, {
-        maxLineLength: 32,
+        maxLineLength: 34,
       });
 
       const expectedOutput = `
