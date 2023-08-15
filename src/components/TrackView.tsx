@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { TabData } from 'types/TabData';
 import { Track } from 'types/Track';
 import { TrackData } from 'types/TrackData';
-import { SequenceData, packItemData, unpackItemData } from 'utils/sequenceUtils';
+import { packItemData, unpackItemData } from 'utils/sequenceUtils';
 import { formatRiffs, getBarTabsWithTimeSignatures } from 'utils/tabUtils';
 import { getWorkerPool } from 'workers/getWorkerPool';
 import ControlContainer from './ControlContainer';
@@ -33,7 +33,7 @@ export default function TrackView(props: IProps) {
     if (!trackData) {
       setStatus('Processing track data...');
       pool
-        .exec('convertSongsterrDataToTrackData', [songsterrData])
+        .convertSongsterrDataToTrackData(songsterrData)
         .then(setTrackData)
         .catch((error) => {
           enqueueSnackbar(`An error occurred: "${error}".`, { variant: 'error' });
@@ -42,15 +42,15 @@ export default function TrackView(props: IProps) {
     } else if (!tabData) {
       setStatus('Converting to tab...');
       pool
-        .exec('convertTrackDataToTabData', [trackData])
+        .convertTrackDataToTabData(trackData)
         .then(setTabData)
         .catch((error) => {
           enqueueSnackbar(`An error occurred: "${error}".`, { variant: 'error' });
         });
     } else if (!riffs) {
       pool
-        .exec('findSequences', [getBarTabsWithTimeSignatures(tabData).map(packItemData)])
-        .then((result: SequenceData<string>) => {
+        .findSequences(getBarTabsWithTimeSignatures(tabData).map(packItemData))
+        .then((result) => {
           const inputRiffs = result.sequences.map(({ items, endings }, sequenceIndex) => ({
             riffIndex: sequenceIndex,
             bars: items
