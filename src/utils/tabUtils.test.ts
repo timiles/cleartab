@@ -818,6 +818,25 @@ Order: Riff 1, Riff 2 (x2)`.substring(1);
       expect(output).toBe(expectedOutput);
     });
 
+    it('handles riff label longer than riff, line length exceeded', () => {
+      const riffs = [['|1|'], ['|2|3|4|']];
+
+      const output = renderRiffs('E|', riffs, defaultOrder, {
+        maxLineLength: 16,
+      });
+
+      const expectedOutput = `
+  [Riff 1]
+E||1|     
+
+[Riff 2]
+|2|3|4| 
+
+Order: Riff 1, Riff 2 (x2)`.substring(1);
+
+      expect(output).toBe(expectedOutput);
+    });
+
     it('handles riff label causing line to exceed max length', () => {
       // Max line length of 34 is enough for bar 5, but not enough for [Riff 2]
       const output = renderRiffs('E|', defaultRiffs, defaultOrder, {

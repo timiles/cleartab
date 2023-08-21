@@ -521,7 +521,8 @@ export function renderRiffs(
           currentLineLength = barLength;
         }
       } else {
-        currentLineLength += barLength;
+        // If it's the last bar, take the whole nextItemLength
+        currentLineLength += barIndex === bars.length - 1 ? nextItemLength : barLength;
       }
     });
   });
