@@ -306,6 +306,96 @@ C#|`.substring(1);
       expect(tab).toBe(expectedTab);
     });
 
+    it('handles tuplets', () => {
+      const trackData: TrackData = {
+        stringNames: ['E'],
+        bars: [
+          {
+            timeSignature: [4, 4],
+            beats: [
+              // quaver triplets (12) means a quaver (8) is 1.5x the smallest duration
+              { duration: [1, 12], notes: [{ string: 0, fret: 1 }] },
+              { duration: [1, 12], notes: [{ string: 0, fret: 2 }] },
+              { duration: [1, 12], notes: [{ string: 0, fret: 3 }] },
+              { duration: [1, 8], notes: [{ string: 0, fret: 4 }] },
+              { duration: [1, 8], notes: [{ string: 0, fret: 5 }] },
+              { duration: [1, 2], notes: [{ string: 0, fret: 6 }] },
+            ],
+          },
+          {
+            beats: [
+              // crotchet quintuplets (10) means a quaver (8) is 1.25x the smallest duration
+              { duration: [1, 10], notes: [{ string: 0, fret: 1 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 2 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 3 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 4 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 5 }] },
+              { duration: [1, 8], notes: [{ string: 0, fret: 6 }] },
+              { duration: [1, 8], notes: [{ string: 0, fret: 7 }] },
+              { duration: [1, 4], notes: [{ string: 0, fret: 8 }] },
+            ],
+          },
+          {
+            beats: [
+              // Triplets and quintuplets in same bar
+              { duration: [1, 12], notes: [{ string: 0, fret: 1 }] },
+              { duration: [1, 12], notes: [{ string: 0, fret: 2 }] },
+              { duration: [1, 12], notes: [{ string: 0, fret: 3 }] },
+              { duration: [1, 8], notes: [{ string: 0, fret: 4 }] },
+              { duration: [1, 8], notes: [{ string: 0, fret: 5 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 1 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 2 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 3 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 4 }] },
+              { duration: [1, 10], notes: [{ string: 0, fret: 5 }] },
+            ],
+          },
+        ],
+      };
+
+      const expectedBarTabs = [
+        '1~2~3~4~~5~~6~~~~~~~~~~~|',
+        '1~~~2~~~3~~~4~~~5~~~6~~~~7~~~~8~~~~~~~~~|',
+        '1~~~~~~~~~2~~~~~~~~~3~~~~~~~~~4~~~~~~~~~~~~~~5~~~~~~~~~~~~~~1~~~~~~~~~~~2~~~~~~~~~~~3~~~~~~~~~~~4~~~~~~~~~~~5~~~~~~~~~~~|',
+      ];
+
+      const tabData = convertTrackDataToTabData(trackData);
+      expect(tabData.barTabs).toStrictEqual(expectedBarTabs);
+    });
+
+    it('handles tuplets (real life example)', () => {
+      const trackData: TrackData = {
+        stringNames: ['G', 'D', 'A', 'E'],
+        bars: [
+          {
+            beats: [
+              { duration: [1, 8], notes: [{ string: 3, fret: 0, modifier: 4 }] },
+              { duration: [1, 8], notes: [{ string: 3, fret: 0, modifier: 4 }] },
+              { duration: [1, 16], notes: [{ string: 3, fret: 0 }] },
+              { duration: [1, 16], notes: [{ string: 2, fret: 7 }] },
+              // semiquaver triplets (24) means a semiquaver (16) is 1.5x the smallest duration
+              { duration: [1, 24], notes: [{ string: 1, fret: 5 }] },
+              { duration: [1, 24], notes: [{ string: 1, fret: 6, modifier: 0 }] },
+              { duration: [1, 24], notes: [{ string: 1, fret: 5, modifier: 1 }] },
+              { duration: [1, 16], notes: [{ string: 2, fret: 7 }] },
+              { duration: [1, 16], notes: [{ string: 3, fret: 7 }] },
+              { duration: [1, 16], notes: [{ string: 3, fret: 8 }] },
+              { duration: [1, 16], notes: [{ string: 3, fret: 5 }] },
+            ],
+          },
+        ],
+      };
+
+      const expectedBarTab = `
+--------------------h-p-------------|
+------------------5~6~5~------------|
+.-----.--------7~~------7~~---------|
+0~~~~~0~~~~~0~~------------7~~8~~5~~|`.substring(1);
+
+      const tabData = convertTrackDataToTabData(trackData);
+      expect(tabData.barTabs[0]).toBe(expectedBarTab);
+    });
+
     it('handles repeating quavers', () => {
       const trackData: TrackData = {
         stringNames: ['G', 'D', 'A', 'E'],

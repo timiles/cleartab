@@ -3,6 +3,7 @@ import { Note, NoteModifier } from 'types/Note';
 import { TabData } from 'types/TabData';
 import { TrackData } from 'types/TrackData';
 import { isArrayNotEmpty } from './arrayUtils';
+import { findLowestCommonMultiple } from './mathUtils';
 
 const BAR_LINE = '|';
 const REPEAT_BAR_LINE = '‖';
@@ -126,7 +127,8 @@ export function convertTrackDataToTabData({ stringNames, bars }: TrackData): Tab
     const lineOffset = topStringHasAnnotations ? 1 : 0;
     const lines = new Array<string>(stringNames.length + lineOffset).fill('');
 
-    const shortestBeatType = Math.max(...bar.beats.map((beat) => beat.duration[1]));
+    const shortestBeatType = findLowestCommonMultiple(bar.beats.map((beat) => beat.duration[1]));
+
     let repeatQuaverCount = 0;
 
     bar.beats.forEach((beat, beatIndex) => {
