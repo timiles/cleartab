@@ -1,5 +1,8 @@
 import { NoteModifier } from 'types/Note';
+import { NoteTime } from 'types/NoteTime';
 import { TrackData } from 'types/TrackData';
+import { range } from './arrayUtils';
+import { simplifyNoteTime } from './noteTimeUtils';
 import {
   convertTrackDataToTabData,
   formatRiffLabel,
@@ -17,31 +20,13 @@ describe('tabUtils', () => {
         bars: [
           {
             timeSignature: [4, 4],
-            beats: [
-              {
-                notes: [
-                  { string: 5, fret: 0 },
-                  { string: 4, fret: 2 },
-                  { string: 3, fret: 2 },
-                ],
-                duration: [1, 4],
-              },
-              {
-                notes: [{ string: 2, fret: 0 }],
-                duration: [3, 8],
-              },
-              {
-                notes: [{ string: 1, fret: 2 }],
-                duration: [1, 8],
-              },
-              {
-                notes: [],
-                duration: [1, 8],
-              },
-              {
-                notes: [{ string: 0, fret: 2 }],
-                duration: [1, 8],
-              },
+            notes: [
+              { startNoteTime: [0, 1], duration: [1, 4], string: 5, fret: 0 },
+              { startNoteTime: [0, 1], duration: [1, 4], string: 4, fret: 2 },
+              { startNoteTime: [0, 1], duration: [1, 4], string: 3, fret: 2 },
+              { startNoteTime: [1, 4], duration: [3, 8], string: 2, fret: 0 },
+              { startNoteTime: [5, 8], duration: [1, 8], string: 1, fret: 2 },
+              { startNoteTime: [7, 8], duration: [1, 8], string: 0, fret: 2 },
             ],
           },
         ],
@@ -80,11 +65,7 @@ E|`.substring(1);
     it('handles tuning with an accidental', () => {
       const trackData: TrackData = {
         stringNames: ['E', 'B', 'G', 'D', 'A', 'C#'],
-        bars: [
-          {
-            beats: [],
-          },
-        ],
+        bars: [{ timeSignature: [4, 4], notes: [] }],
       };
 
       const expectedTuningTab = `
@@ -105,7 +86,7 @@ C#|`.substring(1);
         bars: [
           {
             timeSignature: [3, 16],
-            beats: [],
+            notes: [],
           },
         ],
       };
@@ -127,7 +108,7 @@ C#|`.substring(1);
         bars: [
           {
             timeSignature: [3, 16],
-            beats: [],
+            notes: [],
           },
         ],
       };
@@ -138,60 +119,108 @@ C#|`.substring(1);
       expect(tabData.timeSignatureTabsLookup.get(0)).toBe(expectedTimeSignatureTab);
     });
 
+    it('handles empty bar notes', () => {
+      const trackData: TrackData = {
+        stringNames: ['E'],
+        bars: [
+          {
+            timeSignature: [3, 16],
+            notes: [],
+          },
+        ],
+      };
+
+      const expectedTab = '-|';
+
+      const tabData = convertTrackDataToTabData(trackData);
+      const tab = joinTabs(...tabData.barTabs);
+      expect(tab).toBe(expectedTab);
+    });
+
     it('handles note modifiers', () => {
       const trackData: TrackData = {
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           {
             timeSignature: [4, 4],
-            beats: [
+            notes: [
               {
-                notes: [
-                  { string: 5, fret: 0, modifier: NoteModifier.Staccato },
-                  { string: 4, fret: 2, modifier: NoteModifier.Staccato },
-                  { string: 3, fret: 2, modifier: NoteModifier.Staccato },
-                ],
+                startNoteTime: [0, 1],
                 duration: [1, 4],
+                string: 5,
+                fret: 0,
+                modifier: NoteModifier.Staccato,
               },
               {
-                notes: [{ string: 2, fret: 0 }],
-                duration: [1, 8],
-              },
-              {
-                notes: [{ string: 2, fret: 2, modifier: NoteModifier.HammerOn }],
+                startNoteTime: [0, 1],
                 duration: [1, 4],
+                string: 4,
+                fret: 2,
+                modifier: NoteModifier.Staccato,
               },
               {
-                notes: [{ string: 0, fret: 2 }],
-                duration: [1, 8],
+                startNoteTime: [0, 1],
+                duration: [1, 4],
+                string: 3,
+                fret: 2,
+                modifier: NoteModifier.Staccato,
               },
               {
-                notes: [{ string: 0, fret: 7, modifier: NoteModifier.SlideUp }],
+                startNoteTime: [1, 4],
                 duration: [1, 8],
+                string: 2,
+                fret: 0,
               },
               {
-                notes: [{ string: 0, fret: 2, modifier: NoteModifier.SlideDown }],
+                startNoteTime: [3, 8],
+                duration: [1, 4],
+                string: 2,
+                fret: 2,
+                modifier: NoteModifier.HammerOn,
+              },
+              {
+                startNoteTime: [5, 8],
                 duration: [1, 8],
+                string: 0,
+                fret: 2,
+              },
+              {
+                startNoteTime: [3, 4],
+                duration: [1, 8],
+                string: 0,
+                fret: 7,
+                modifier: NoteModifier.SlideUp,
+              },
+              {
+                startNoteTime: [7, 8],
+                duration: [1, 8],
+                string: 0,
+                fret: 2,
+                modifier: NoteModifier.SlideDown,
               },
             ],
           },
           {
-            beats: [
+            notes: [
               {
-                notes: [{ string: 0, fret: 2, modifier: NoteModifier.Tie }],
+                startNoteTime: [0, 1],
                 duration: [1, 4],
+                string: 0,
+                fret: 2,
+                modifier: NoteModifier.Tie,
               },
               {
-                notes: [{ string: 0, fret: 2, modifier: NoteModifier.Tie }],
+                startNoteTime: [1, 4],
                 duration: [1, 8],
+                string: 0,
+                fret: 2,
+                modifier: NoteModifier.Tie,
               },
               {
-                notes: [],
-                duration: [1, 8],
-              },
-              {
-                notes: [{ string: 2, fret: 4 }],
+                startNoteTime: [1, 2],
                 duration: [1, 2],
+                string: 2,
+                fret: 4,
               },
             ],
           },
@@ -218,75 +247,88 @@ C#|`.substring(1);
         bars: [
           {
             timeSignature: [4, 4],
-            beats: [{ notes: [{ string: 0, fret: 14 }], duration: [4, 4] }],
+            notes: [{ startNoteTime: [0, 1], duration: [4, 4], string: 0, fret: 14 }],
           },
           {
-            beats: [
+            notes: [
               {
-                notes: [
-                  { string: 5, fret: 0, modifier: NoteModifier.Staccato },
-                  { string: 4, fret: 12, modifier: NoteModifier.Staccato },
-                  { string: 3, fret: 12, modifier: NoteModifier.Staccato },
-                ],
+                startNoteTime: [0, 1],
                 duration: [1, 4],
+                string: 5,
+                fret: 0,
+                modifier: NoteModifier.Staccato,
               },
               {
-                notes: [{ string: 2, fret: 0 }],
-                duration: [1, 8],
-              },
-              {
-                notes: [{ string: 2, fret: 12, modifier: NoteModifier.HammerOn }],
+                startNoteTime: [0, 1],
                 duration: [1, 4],
+                string: 4,
+                fret: 12,
+                modifier: NoteModifier.Staccato,
               },
               {
-                notes: [{ string: 0, fret: 12 }],
-                duration: [1, 8],
+                startNoteTime: [0, 1],
+                duration: [1, 4],
+                string: 3,
+                fret: 12,
+                modifier: NoteModifier.Staccato,
               },
               {
-                notes: [{ string: 0, fret: 17, modifier: NoteModifier.SlideUp }],
+                startNoteTime: [1, 4],
                 duration: [1, 8],
+                string: 2,
+                fret: 0,
               },
               {
-                notes: [{ string: 0, fret: 12, modifier: NoteModifier.SlideDown }],
+                startNoteTime: [3, 8],
+                duration: [1, 4],
+                string: 2,
+                fret: 12,
+                modifier: NoteModifier.HammerOn,
+              },
+              {
+                startNoteTime: [5, 8],
                 duration: [1, 8],
+                string: 0,
+                fret: 12,
+              },
+              {
+                startNoteTime: [3, 4],
+                duration: [1, 8],
+                string: 0,
+                fret: 17,
+                modifier: NoteModifier.SlideUp,
+              },
+              {
+                startNoteTime: [7, 8],
+                duration: [1, 8],
+                string: 0,
+                fret: 12,
+                modifier: NoteModifier.SlideDown,
               },
             ],
           },
           {
-            beats: [
+            notes: [
               {
-                notes: [{ string: 0, fret: 12, modifier: NoteModifier.Tie }],
+                startNoteTime: [0, 1],
                 duration: [1, 4],
+                string: 0,
+                fret: 12,
+                modifier: NoteModifier.Tie,
               },
               {
-                notes: [{ string: 0, fret: 12, modifier: NoteModifier.Tie }],
+                startNoteTime: [1, 4],
                 duration: [1, 8],
+                string: 0,
+                fret: 12,
+                modifier: NoteModifier.Tie,
               },
-              {
-                notes: [],
-                duration: [1, 8],
-              },
-              {
-                notes: [
-                  { string: 2, fret: 10 },
-                  { string: 4, fret: 8 },
-                ],
-                duration: [1, 8],
-              },
-              {
-                notes: [
-                  { string: 2, fret: 11 },
-                  { string: 4, fret: 9 },
-                ],
-                duration: [1, 8],
-              },
-              {
-                notes: [
-                  { string: 2, fret: 12 },
-                  { string: 4, fret: 10 },
-                ],
-                duration: [1, 4],
-              },
+              { startNoteTime: [1, 2], duration: [1, 8], string: 2, fret: 10 },
+              { startNoteTime: [1, 2], duration: [1, 8], string: 4, fret: 8 },
+              { startNoteTime: [5, 8], duration: [1, 8], string: 2, fret: 11 },
+              { startNoteTime: [5, 8], duration: [1, 8], string: 4, fret: 9 },
+              { startNoteTime: [3, 4], duration: [1, 4], string: 2, fret: 12 },
+              { startNoteTime: [3, 4], duration: [1, 4], string: 4, fret: 10 },
             ],
           },
         ],
@@ -312,42 +354,42 @@ C#|`.substring(1);
         bars: [
           {
             timeSignature: [4, 4],
-            beats: [
+            notes: [
               // quaver triplets (12) means a quaver (8) is 1.5x the smallest duration
-              { duration: [1, 12], notes: [{ string: 0, fret: 1 }] },
-              { duration: [1, 12], notes: [{ string: 0, fret: 2 }] },
-              { duration: [1, 12], notes: [{ string: 0, fret: 3 }] },
-              { duration: [1, 8], notes: [{ string: 0, fret: 4 }] },
-              { duration: [1, 8], notes: [{ string: 0, fret: 5 }] },
-              { duration: [1, 2], notes: [{ string: 0, fret: 6 }] },
+              { startNoteTime: [0, 1], duration: [1, 12], string: 0, fret: 1 },
+              { startNoteTime: [1, 12], duration: [1, 12], string: 0, fret: 2 },
+              { startNoteTime: [1, 6], duration: [1, 12], string: 0, fret: 3 },
+              { startNoteTime: [1, 4], duration: [1, 8], string: 0, fret: 4 },
+              { startNoteTime: [3, 8], duration: [1, 8], string: 0, fret: 5 },
+              { startNoteTime: [1, 2], duration: [1, 2], string: 0, fret: 6 },
             ],
           },
           {
-            beats: [
+            notes: [
               // crotchet quintuplets (10) means a quaver (8) is 1.25x the smallest duration
-              { duration: [1, 10], notes: [{ string: 0, fret: 1 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 2 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 3 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 4 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 5 }] },
-              { duration: [1, 8], notes: [{ string: 0, fret: 6 }] },
-              { duration: [1, 8], notes: [{ string: 0, fret: 7 }] },
-              { duration: [1, 4], notes: [{ string: 0, fret: 8 }] },
+              { startNoteTime: [0, 1], duration: [1, 10], string: 0, fret: 1 },
+              { startNoteTime: [1, 10], duration: [1, 10], string: 0, fret: 2 },
+              { startNoteTime: [1, 5], duration: [1, 10], string: 0, fret: 3 },
+              { startNoteTime: [3, 10], duration: [1, 10], string: 0, fret: 4 },
+              { startNoteTime: [2, 5], duration: [1, 10], string: 0, fret: 5 },
+              { startNoteTime: [1, 2], duration: [1, 8], string: 0, fret: 6 },
+              { startNoteTime: [5, 8], duration: [1, 8], string: 0, fret: 7 },
+              { startNoteTime: [3, 4], duration: [1, 4], string: 0, fret: 8 },
             ],
           },
           {
-            beats: [
+            notes: [
               // Triplets and quintuplets in same bar
-              { duration: [1, 12], notes: [{ string: 0, fret: 1 }] },
-              { duration: [1, 12], notes: [{ string: 0, fret: 2 }] },
-              { duration: [1, 12], notes: [{ string: 0, fret: 3 }] },
-              { duration: [1, 8], notes: [{ string: 0, fret: 4 }] },
-              { duration: [1, 8], notes: [{ string: 0, fret: 5 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 1 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 2 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 3 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 4 }] },
-              { duration: [1, 10], notes: [{ string: 0, fret: 5 }] },
+              { startNoteTime: [0, 1], duration: [1, 12], string: 0, fret: 1 },
+              { startNoteTime: [1, 12], duration: [1, 12], string: 0, fret: 2 },
+              { startNoteTime: [1, 6], duration: [1, 12], string: 0, fret: 3 },
+              { startNoteTime: [1, 4], duration: [1, 8], string: 0, fret: 4 },
+              { startNoteTime: [3, 8], duration: [1, 8], string: 0, fret: 5 },
+              { startNoteTime: [1, 2], duration: [1, 10], string: 0, fret: 1 },
+              { startNoteTime: [3, 5], duration: [1, 10], string: 0, fret: 2 },
+              { startNoteTime: [7, 10], duration: [1, 10], string: 0, fret: 3 },
+              { startNoteTime: [4, 5], duration: [1, 10], string: 0, fret: 4 },
+              { startNoteTime: [9, 10], duration: [1, 10], string: 0, fret: 5 },
             ],
           },
         ],
@@ -368,19 +410,20 @@ C#|`.substring(1);
         stringNames: ['G', 'D', 'A', 'E'],
         bars: [
           {
-            beats: [
-              { duration: [1, 8], notes: [{ string: 3, fret: 0, modifier: 4 }] },
-              { duration: [1, 8], notes: [{ string: 3, fret: 0, modifier: 4 }] },
-              { duration: [1, 16], notes: [{ string: 3, fret: 0 }] },
-              { duration: [1, 16], notes: [{ string: 2, fret: 7 }] },
+            timeSignature: [6, 8],
+            notes: [
+              { startNoteTime: [0, 1], duration: [1, 8], string: 3, fret: 0, modifier: 4 },
+              { startNoteTime: [1, 8], duration: [1, 8], string: 3, fret: 0, modifier: 4 },
+              { startNoteTime: [1, 4], duration: [1, 16], string: 3, fret: 0 },
+              { startNoteTime: [5, 16], duration: [1, 16], string: 2, fret: 7 },
               // semiquaver triplets (24) means a semiquaver (16) is 1.5x the smallest duration
-              { duration: [1, 24], notes: [{ string: 1, fret: 5 }] },
-              { duration: [1, 24], notes: [{ string: 1, fret: 6, modifier: 0 }] },
-              { duration: [1, 24], notes: [{ string: 1, fret: 5, modifier: 1 }] },
-              { duration: [1, 16], notes: [{ string: 2, fret: 7 }] },
-              { duration: [1, 16], notes: [{ string: 3, fret: 7 }] },
-              { duration: [1, 16], notes: [{ string: 3, fret: 8 }] },
-              { duration: [1, 16], notes: [{ string: 3, fret: 5 }] },
+              { startNoteTime: [3, 8], duration: [1, 24], string: 1, fret: 5 },
+              { startNoteTime: [5, 12], duration: [1, 24], string: 1, fret: 6, modifier: 0 },
+              { startNoteTime: [11, 24], duration: [1, 24], string: 1, fret: 5, modifier: 1 },
+              { startNoteTime: [1, 2], duration: [1, 16], string: 2, fret: 7 },
+              { startNoteTime: [9, 16], duration: [1, 16], string: 3, fret: 7 },
+              { startNoteTime: [5, 8], duration: [1, 16], string: 3, fret: 8 },
+              { startNoteTime: [11, 16], duration: [1, 16], string: 3, fret: 5 },
             ],
           },
         ],
@@ -402,81 +445,169 @@ C#|`.substring(1);
         bars: [
           {
             timeSignature: [4, 4],
-            beats: new Array(8).fill({
-              notes: [
-                { string: 1, fret: 5, modifier: NoteModifier.Staccato },
-                { string: 2, fret: 3, modifier: NoteModifier.Staccato },
-              ],
-              duration: [1, 8],
-            }),
-          },
-          {
-            beats: [
-              ...new Array(4).fill({ notes: [{ string: 2, fret: 3 }], duration: [1, 8] }),
-              { notes: [{ string: 2, fret: 5 }], duration: [1, 8] },
-              { notes: [{ string: 2, fret: 3 }], duration: [1, 8] },
-              { notes: [{ string: 2, fret: 5 }], duration: [1, 8] },
-              { notes: [{ string: 2, fret: 3 }], duration: [1, 8] },
-            ],
-          },
-          {
-            beats: [
-              ...new Array(4).fill({ notes: [{ string: 2, fret: 3 }], duration: [1, 8] }),
-              ...new Array(4).fill({
-                notes: [{ string: 2, fret: 3, modifier: NoteModifier.Staccato }],
+            notes: range(8).flatMap((i) => [
+              {
+                startNoteTime: simplifyNoteTime([i, 8]),
                 duration: [1, 8],
-              }),
+                string: 1,
+                fret: 5,
+                modifier: NoteModifier.Staccato,
+              },
+              {
+                startNoteTime: simplifyNoteTime([i, 8]),
+                duration: [1, 8],
+                string: 2,
+                fret: 3,
+                modifier: NoteModifier.Staccato,
+              },
+            ]),
+          },
+          {
+            notes: range(8).flatMap((i) => [
+              {
+                startNoteTime: simplifyNoteTime([i, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 1,
+                fret: 5,
+              },
+              ...(i < 4
+                ? [
+                    {
+                      startNoteTime: simplifyNoteTime([i, 8]),
+                      duration: [1, 8] as NoteTime,
+                      string: 2,
+                      fret: 3,
+                    },
+                  ]
+                : []),
+            ]),
+          },
+          {
+            notes: range(8).flatMap((i) => [
+              {
+                startNoteTime: simplifyNoteTime([i, 8]),
+                duration: [1, 8],
+                string: 1,
+                fret: i % 2,
+              },
+              {
+                startNoteTime: simplifyNoteTime([i, 8]),
+                duration: [1, 8],
+                string: 2,
+                fret: 0,
+              },
+            ]),
+          },
+          {
+            notes: [
+              ...range(4).map((i) => ({
+                startNoteTime: simplifyNoteTime([i, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 2,
+                fret: 3,
+              })),
+              { startNoteTime: simplifyNoteTime([4, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([5, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([6, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([7, 8]), duration: [1, 8], string: 2, fret: 3 },
             ],
           },
           {
-            beats: [
-              ...new Array(3).fill({ notes: [{ string: 2, fret: 3 }], duration: [1, 8] }),
-              ...new Array(5).fill({ notes: [{ string: 2, fret: 5 }], duration: [1, 8] }),
+            notes: [
+              ...range(4).map((i) => ({
+                startNoteTime: simplifyNoteTime([i, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 2,
+                fret: 3,
+              })),
+              ...range(4).map((i) => ({
+                startNoteTime: simplifyNoteTime([i + 4, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 2,
+                fret: 3,
+                modifier: NoteModifier.Staccato,
+              })),
             ],
           },
           {
-            beats: [
-              ...new Array(2).fill({ notes: [{ string: 2, fret: 3 }], duration: [1, 8] }),
-              ...new Array(4).fill({ notes: [{ string: 2, fret: 5 }], duration: [1, 8] }),
-              ...new Array(2).fill({ notes: [{ string: 2, fret: 3 }], duration: [1, 8] }),
+            notes: [
+              { startNoteTime: simplifyNoteTime([0, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([1, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([2, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([3, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([4, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([5, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([6, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([7, 8]), duration: [1, 8], string: 2, fret: 5 },
             ],
           },
           {
-            beats: [
-              { notes: [{ string: 2, fret: 3 }], duration: [1, 8] },
-              ...new Array(6).fill({ notes: [{ string: 2, fret: 5 }], duration: [1, 8] }),
-              { notes: [{ string: 2, fret: 3 }], duration: [1, 8] },
+            notes: [
+              { startNoteTime: simplifyNoteTime([0, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([1, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([2, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([3, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([4, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([5, 8]), duration: [1, 8], string: 2, fret: 5 },
+              { startNoteTime: simplifyNoteTime([6, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([7, 8]), duration: [1, 8], string: 2, fret: 3 },
+            ],
+          },
+          {
+            notes: [
+              { startNoteTime: [0, 8], duration: [1, 8], string: 2, fret: 3 },
+              ...range(6).map((i) => ({
+                startNoteTime: simplifyNoteTime([i + 1, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 2,
+                fret: 5,
+              })),
+              { startNoteTime: [7, 8], duration: [1, 8], string: 2, fret: 3 },
             ],
           },
           {
             // Crotchets should still be written out in full
-            beats: [...new Array(4).fill({ notes: [{ string: 2, fret: 3 }], duration: [1, 4] })],
-          },
-          {
-            // Repeated dotted crotchets should be written out
-            beats: [
-              { notes: [{ string: 2, fret: 3 }], duration: [1, 8] },
-              { notes: [{ string: 2, fret: 3 }], duration: [1, 8] },
-              { notes: [{ string: 2, fret: 3 }], duration: [3, 8] },
-              { notes: [{ string: 2, fret: 3 }], duration: [3, 8] },
+            notes: [
+              { startNoteTime: simplifyNoteTime([0, 4]), duration: [1, 4], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([1, 4]), duration: [1, 4], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([2, 4]), duration: [1, 4], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([3, 4]), duration: [1, 4], string: 2, fret: 3 },
             ],
           },
           {
-            beats: [
-              ...new Array(4).fill({ notes: [{ string: 1, fret: 15 }], duration: [1, 8] }),
-              ...new Array(2).fill({ notes: [{ string: 0, fret: 17 }], duration: [1, 8] }),
-              ...new Array(2).fill({ notes: [], duration: [1, 8] }),
+            // Repeated dotted crotchets should be written out
+            notes: [
+              { startNoteTime: simplifyNoteTime([0, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([1, 8]), duration: [1, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([2, 8]), duration: [3, 8], string: 2, fret: 3 },
+              { startNoteTime: simplifyNoteTime([5, 8]), duration: [3, 8], string: 2, fret: 3 },
+            ],
+          },
+          {
+            notes: [
+              ...range(4).map((i) => ({
+                startNoteTime: simplifyNoteTime([i, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 1,
+                fret: 15,
+              })),
+              ...range(2).map((i) => ({
+                startNoteTime: simplifyNoteTime([i + 4, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 0,
+                fret: 17,
+              })),
             ],
           },
         ],
       };
 
       const expectedTab = `
-                                                  ⌐¬    
-.-|------|----|-----|------|----|----|--------|⌐¬-17’--|
-5”|------|--.-|-----|------|----|----|--------|15”-----|
-3”|3”5353|3”3”|3’’5”|3’5”3’|35”3|3333|3’3~~3~~|--------|
---|------|----|-----|------|----|----|--------|--------|`.substring(1);
+                                                                ⌐¬    
+.-|----|--------|------|----|-----|------|----|----|--------|⌐¬-17’--|
+5”|5”5”|01010101|------|--.-|-----|------|----|----|--------|15”-----|
+3”|3”--|00000000|3”5353|3”3”|3’’5”|3’5”3’|35”3|3333|3’3~~3~~|--------|
+--|----|--------|------|----|-----|------|----|----|--------|--------|`.substring(1);
 
       const tabData = convertTrackDataToTabData(trackData);
       const tab = joinTabs(...tabData.barTabs);

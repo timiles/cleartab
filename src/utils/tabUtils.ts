@@ -1,9 +1,10 @@
-import deepEqual from 'deep-equal';
 import { Note, NoteModifier } from 'types/Note';
+import { NoteTime } from 'types/NoteTime';
 import { TabData } from 'types/TabData';
 import { TrackData } from 'types/TrackData';
-import { isArrayNotEmpty } from './arrayUtils';
+import { isArrayNotEmpty, isNotNullish } from './arrayUtils';
 import { findLowestCommonMultiple } from './mathUtils';
+import { areEquivalentNoteTimes, isNotePlaying } from './noteTimeUtils';
 
 const BAR_LINE = '|';
 const REPEAT_BAR_LINE = '‖';
@@ -85,7 +86,7 @@ function renderTuningTab(stringNames: Array<string>) {
   return stringNames.map((s) => `${s.padStart(maxLengthStringName, ' ')}|`).join('\n');
 }
 
-function renderTimeSignatureTab(timeSignature: [number, number], numberOfStrings: number) {
+function renderTimeSignatureTab(timeSignature: NoteTime, numberOfStrings: number) {
   if (numberOfStrings === 1) {
     return `${timeSignature[0]}/${timeSignature[1]}:`;
   }
@@ -100,15 +101,66 @@ function renderTimeSignatureTab(timeSignature: [number, number], numberOfStrings
   return lines.map((value) => `${value.padStart(size, ' ')}:`).join('\n');
 }
 
+function getIsRepeatQuaver(
+  shortestBeatType: number,
+  notes: Array<Note>,
+  previousNotesByString: Array<Note | undefined>,
+): boolean {
+  if (shortestBeatType !== QUAVER_BEAT_TYPE) {
+    return false;
+  }
+
+  if (notes.length === 0) {
+    return false;
+  }
+
+  if (!notes.every((note) => areEquivalentNoteTimes(note.duration, [1, QUAVER_BEAT_TYPE]))) {
+    return false;
+  }
+
+  const [startNumerator, startDenominator] = notes[0].startNoteTime;
+  // Ensure start time in quavers, eg if 3/4 we go to 6/8 before subtracting 1 to get 5/8.
+  const previousStart: NoteTime = [
+    (startNumerator * QUAVER_BEAT_TYPE) / startDenominator - 1,
+    QUAVER_BEAT_TYPE,
+  ];
+
+  const notesOnPreviousStart = previousNotesByString
+    .filter(isNotNullish)
+    .filter((note) => areEquivalentNoteTimes(note.startNoteTime, previousStart));
+  if (notesOnPreviousStart.length !== notes.length) {
+    return false;
+  }
+
+  for (let i = 0; i < notes.length; i += 1) {
+    const previousNote = notesOnPreviousStart.find((note) => note.string === notes[i].string);
+    if (
+      !previousNote ||
+      previousNote.fret !== notes[i].fret ||
+      previousNote.modifier !== notes[i].modifier
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function convertTrackDataToTabData({ stringNames, bars }: TrackData): TabData {
+  if (!bars?.[0].timeSignature) {
+    throw new Error('First bar requires a time signature.');
+  }
+
   const tabData: TabData = {
     tuningTab: renderTuningTab(stringNames),
     timeSignatureTabsLookup: new Map<number, string>(),
     barTabs: new Array<string>(),
   };
 
+  let currentTimeSignature = bars[0].timeSignature;
+
   // This is the number of repeat quavers before we use ” instead of ’
-  let repeatQuaverCountThreshold: number | undefined;
+  let repeatQuaverCountThreshold = 0;
 
   bars.forEach((bar, barIndex) => {
     if (bar.timeSignature) {
@@ -117,30 +169,38 @@ export function convertTrackDataToTabData({ stringNames, bars }: TrackData): Tab
         renderTimeSignatureTab(bar.timeSignature, stringNames.length),
       );
 
+      currentTimeSignature = bar.timeSignature;
+
       repeatQuaverCountThreshold =
         (bar.timeSignature[0] / bar.timeSignature[1]) * (QUAVER_BEAT_TYPE / 2) - 1;
     }
 
-    const topStringHasAnnotations = bar.beats
-      .flatMap((beat) => beat.notes.filter((note) => note.string === 0))
+    const topStringHasAnnotations = bar.notes
+      .filter((note) => note.string === 0)
       .some((note) => getNoteModifierText(note) !== null || getNoteSize(note) === 2);
     const lineOffset = topStringHasAnnotations ? 1 : 0;
     const lines = new Array<string>(stringNames.length + lineOffset).fill('');
 
-    const shortestBeatType = findLowestCommonMultiple(bar.beats.map((beat) => beat.duration[1]));
+    const shortestBeatType = findLowestCommonMultiple(bar.notes.map((note) => note.duration[1]));
 
     let repeatQuaverCount = 0;
+    const previousNotesByString = new Array<Note | undefined>(stringNames.length);
 
-    bar.beats.forEach((beat, beatIndex) => {
-      const noteSize = isArrayNotEmpty(beat.notes) ? Math.max(...beat.notes.map(getNoteSize)) : 1;
-      const beatSize = (beat.duration[0] * shortestBeatType) / beat.duration[1] + noteSize - 1;
+    const numberOfShortestBeatTypesInBar =
+      (currentTimeSignature[0] * shortestBeatType) / currentTimeSignature[1];
+    for (let beatIndex = 0; beatIndex < numberOfShortestBeatTypesInBar; beatIndex += 1) {
+      const notesStartingOnBeat = bar.notes.filter((n) =>
+        areEquivalentNoteTimes(n.startNoteTime, [beatIndex, shortestBeatType]),
+      );
 
-      const isRepeatQuaver =
-        shortestBeatType === QUAVER_BEAT_TYPE &&
-        beat.duration[0] === 1 &&
-        beat.duration[1] === QUAVER_BEAT_TYPE &&
-        beatIndex > 0 &&
-        deepEqual(bar.beats[beatIndex - 1], beat);
+      const noteSize =
+        notesStartingOnBeat.length > 0 ? Math.max(...notesStartingOnBeat.map(getNoteSize)) : 1;
+
+      const isRepeatQuaver = getIsRepeatQuaver(
+        shortestBeatType,
+        notesStartingOnBeat,
+        previousNotesByString,
+      );
       if (isRepeatQuaver) {
         repeatQuaverCount += 1;
       } else {
@@ -148,12 +208,14 @@ export function convertTrackDataToTabData({ stringNames, bars }: TrackData): Tab
       }
 
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-        const stringIndex = lineIndex - lineOffset;
-        const noteOnLine = beat.notes.find((note) => note.string === stringIndex);
+        const stringNumber = lineIndex - lineOffset;
 
-        if (noteOnLine) {
+        const noteOnString = notesStartingOnBeat.find((n) => n.string === stringNumber);
+        const previousNoteOnString = previousNotesByString[stringNumber];
+
+        if (noteOnString) {
           if (isRepeatQuaver) {
-            if (repeatQuaverCountThreshold && repeatQuaverCount < repeatQuaverCountThreshold) {
+            if (repeatQuaverCount < repeatQuaverCountThreshold) {
               lines[lineIndex] += REPEAT_QUAVER;
             }
             if (repeatQuaverCount === repeatQuaverCountThreshold) {
@@ -162,10 +224,10 @@ export function convertTrackDataToTabData({ stringNames, bars }: TrackData): Tab
               lines[lineIndex] += REPEAT_QUAVERS;
             }
           } else {
-            lines[lineIndex] += getNoteText(noteOnLine, noteSize) + '~'.repeat(beatSize - noteSize);
+            lines[lineIndex] += getNoteText(noteOnString, noteSize);
           }
         } else if (isRepeatQuaver) {
-          if (repeatQuaverCountThreshold && repeatQuaverCount < repeatQuaverCountThreshold) {
+          if (repeatQuaverCount < repeatQuaverCountThreshold) {
             lines[lineIndex] += getSpacerText(lineIndex, lineOffset);
           }
           if (repeatQuaverCount === repeatQuaverCountThreshold) {
@@ -174,25 +236,38 @@ export function convertTrackDataToTabData({ stringNames, bars }: TrackData): Tab
             lines[lineIndex] += getSpacerText(lineIndex, lineOffset);
           }
         } else {
-          const noteOnLineBelow = beat.notes.find((note) => note.string === stringIndex + 1);
+          const noteOnLineBelow = notesStartingOnBeat.find((n) => n.string === stringNumber + 1);
           if (noteOnLineBelow) {
+            // const isNoteBelowRepeatQuaver = getIsRepeatQuaver(
+            //   shortestBeatType,
+            //   noteOnLineBelow,
+            //   previousNotesByLine[lineIndex + 1],
+            // );
+            // if (!isNoteBelowRepeatQuaver) {
             const modifier = getNoteModifierText(noteOnLineBelow, noteSize);
             if (modifier) {
-              lines[lineIndex] +=
-                modifier + getSpacerText(lineIndex, lineOffset).repeat(beatSize - noteSize);
+              lines[lineIndex] += modifier;
             } else if (getNoteSize(noteOnLineBelow) === 2) {
-              lines[lineIndex] +=
-                DOUBLE_SIZE_NOTE_BRACKET +
-                getSpacerText(lineIndex, lineOffset).repeat(beatSize - noteSize);
+              lines[lineIndex] += DOUBLE_SIZE_NOTE_BRACKET;
             } else {
-              lines[lineIndex] += getSpacerText(lineIndex, lineOffset).repeat(beatSize);
+              lines[lineIndex] += getSpacerText(lineIndex, lineOffset).repeat(noteSize);
             }
+            // }
+          } else if (
+            previousNoteOnString &&
+            isNotePlaying(previousNoteOnString, [beatIndex, shortestBeatType])
+          ) {
+            lines[lineIndex] += '~'.repeat(noteSize);
           } else {
-            lines[lineIndex] += getSpacerText(lineIndex, lineOffset).repeat(beatSize);
+            lines[lineIndex] += getSpacerText(lineIndex, lineOffset).repeat(noteSize);
           }
         }
+
+        if (noteOnString) {
+          previousNotesByString[stringNumber] = noteOnString;
+        }
       }
-    });
+    }
 
     tabData.barTabs.push(
       lines.map((line, lineIndex) => `${line}${getBarLineText(lineIndex, lineOffset)}`).join('\n'),

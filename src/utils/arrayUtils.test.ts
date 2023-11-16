@@ -1,4 +1,4 @@
-import { areArraysEqual, isArrayNotEmpty, range } from './arrayUtils';
+import { areArraysEqual, isArrayNotEmpty, isNotNullish, range } from './arrayUtils';
 
 describe('arrayUtils', () => {
   describe('isArrayNotEmpty', () => {
@@ -34,6 +34,20 @@ describe('arrayUtils', () => {
 
     it('returns true if arrays have same items', () => {
       expect(areArraysEqual([1, 2], [1, 2], [1, 2])).toBe(true);
+    });
+  });
+
+  describe('isNotNullish', () => {
+    it('returns only non-nullish number values', () => {
+      const array = [3, null, -1, undefined, 0];
+      const expected = [3, -1, 0];
+      expect(array.filter(isNotNullish)).toStrictEqual(expected);
+    });
+
+    it('returns only non-nullish string values', () => {
+      const array = ['foo', null, 'bar', undefined, ''];
+      const expected = ['foo', 'bar', ''];
+      expect(array.filter(isNotNullish)).toStrictEqual(expected);
     });
   });
 

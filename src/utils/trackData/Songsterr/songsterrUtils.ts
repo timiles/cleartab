@@ -1,8 +1,10 @@
 import { Bar } from 'types/Bar';
 import { Note, NoteModifier } from 'types/Note';
+import { NoteTime } from 'types/NoteTime';
 import { TrackData } from 'types/TrackData';
 import { isArrayNotEmpty } from 'utils/arrayUtils';
 import { getNoteNameFromMidiNote } from 'utils/noteNameUtils';
+import { simplifyNoteTime } from 'utils/noteTimeUtils';
 import { SongsterrData, SongsterrNote } from './SongsterrData';
 
 export function isValidSongsterrData(json: Object): boolean {
@@ -36,49 +38,59 @@ export function convertSongsterrDataToTrackData(songsterrData: SongsterrData): T
   let barIndexAtEndOfRepeat: number | undefined;
 
   songsterrData.measures.forEach((measure, measureIndex) => {
-    const bar: Bar = {
-      // Ignore other voices
-      beats: measure.voices[0].beats.map((beat, beatIndex) => ({
-        duration: beat.duration,
-        notes: beat.notes
-          .filter((songsterrNote) => !songsterrNote.rest)
-          .map((songsterrNote) => {
-            if (songsterrNote.string == null) {
-              throw new Error('string not set');
-            }
-            if (songsterrNote.fret == null) {
-              throw new Error('fret not set');
-            }
+    const bar: Bar = { notes: [] };
 
-            const note: Note = {
-              string: songsterrNote.string,
-              fret: songsterrNote.fret,
-            };
+    // Ignore other voices
+    const voice = measure.voices[0];
+    let startNoteTime: NoteTime = [0, 1];
+    voice.beats.forEach((beat, beatIndex) => {
+      beat.notes.forEach((songsterrNote) => {
+        if (songsterrNote.rest) {
+          return;
+        }
+        if (songsterrNote.string == null) {
+          throw new Error('string not set');
+        }
+        if (songsterrNote.fret == null) {
+          throw new Error('fret not set');
+        }
 
-            let modifier: NoteModifier | undefined;
+        const note: Note = {
+          startNoteTime,
+          duration: beat.duration,
+          string: songsterrNote.string,
+          fret: songsterrNote.fret,
+        };
 
-            // Songsterr puts hammer on, pull off, and slides on the previous note
-            const prevBeat =
-              measure.voices[0].beats[beatIndex - 1] ??
-              songsterrData.measures[measureIndex - 1]?.voices[0].beats.at(-1);
-            if (prevBeat) {
-              const prevNote = prevBeat.notes.find((n) => n.string === songsterrNote.string);
-              if (prevNote && (prevNote.hp !== undefined || prevNote?.slide !== undefined)) {
-                modifier = getNoteModifier(prevNote, songsterrNote);
-              }
-            }
+        let modifier: NoteModifier | undefined;
 
-            if (modifier === undefined) {
-              modifier = getNoteModifier(songsterrNote);
-            }
+        // Songsterr puts hammer on, pull off, and slides on the previous note
+        const prevBeat =
+          voice.beats[beatIndex - 1] ??
+          songsterrData.measures[measureIndex - 1]?.voices[0].beats.at(-1);
+        if (prevBeat) {
+          const prevNote = prevBeat.notes.find((n) => n.string === songsterrNote.string);
+          if (prevNote && (prevNote.hp !== undefined || prevNote?.slide !== undefined)) {
+            modifier = getNoteModifier(prevNote, songsterrNote);
+          }
+        }
 
-            if (modifier !== undefined) {
-              note.modifier = modifier;
-            }
-            return note;
-          }),
-      })),
-    };
+        if (modifier === undefined) {
+          modifier = getNoteModifier(songsterrNote);
+        }
+
+        if (modifier !== undefined) {
+          note.modifier = modifier;
+        }
+
+        bar.notes.push(note);
+      });
+
+      const newStartNumerator =
+        startNoteTime[0] * beat.duration[1] + beat.duration[0] * startNoteTime[1];
+      const newStartDenominator = startNoteTime[1] * beat.duration[1];
+      startNoteTime = simplifyNoteTime([newStartNumerator, newStartDenominator]);
+    });
 
     if (measure.signature) {
       bar.timeSignature = measure.signature;

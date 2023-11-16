@@ -1,3 +1,5 @@
+import { NoteTime } from './NoteTime';
+
 export enum NoteModifier {
   HammerOn,
   PullOff,
@@ -8,6 +10,8 @@ export enum NoteModifier {
 }
 
 export type Note = {
+  startNoteTime: NoteTime;
+  duration: NoteTime;
   string: number;
   fret: number;
   modifier?: NoteModifier;

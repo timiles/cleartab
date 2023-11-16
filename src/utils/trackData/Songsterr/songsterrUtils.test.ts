@@ -72,25 +72,19 @@ describe('songsterrUtils', () => {
         bars: [
           {
             timeSignature: [4, 4],
-            beats: [
-              { notes: [], duration: [1, 4] },
-              {
-                notes: [
-                  { string: 4, fret: 0 },
-                  { string: 3, fret: 0 },
-                ],
-                duration: [1, 4],
-              },
-              { notes: [{ string: 3, fret: 7 }], duration: [1, 2] },
+            notes: [
+              { string: 4, fret: 0, startNoteTime: [1, 4], duration: [1, 4] },
+              { string: 3, fret: 0, startNoteTime: [1, 4], duration: [1, 4] },
+              { string: 3, fret: 7, startNoteTime: [1, 2], duration: [1, 2] },
             ],
           },
           {
-            beats: [
-              { notes: [{ string: 3, fret: 7 }], duration: [1, 8] },
-              { notes: [{ string: 3, fret: 2 }], duration: [1, 8] },
-              { notes: [{ string: 3, fret: 5 }], duration: [1, 4] },
-              { notes: [{ string: 3, fret: 7 }], duration: [1, 4] },
-              { notes: [{ string: 2, fret: 2 }], duration: [1, 4] },
+            notes: [
+              { string: 3, fret: 7, startNoteTime: [0, 1], duration: [1, 8] },
+              { string: 3, fret: 2, startNoteTime: [1, 8], duration: [1, 8] },
+              { string: 3, fret: 5, startNoteTime: [1, 4], duration: [1, 4] },
+              { string: 3, fret: 7, startNoteTime: [1, 2], duration: [1, 4] },
+              { string: 2, fret: 2, startNoteTime: [3, 4], duration: [1, 4] },
             ],
           },
         ],
@@ -131,37 +125,57 @@ describe('songsterrUtils', () => {
         bars: [
           {
             timeSignature: [4, 4],
-            beats: [{ notes: [{ string: 3, fret: 7 }], duration: [4, 4] }],
+            notes: [{ string: 3, fret: 7, startNoteTime: [0, 1], duration: [4, 4] }],
           },
           {
-            beats: [
+            notes: [
               {
-                notes: [{ string: 3, fret: 7, modifier: NoteModifier.Tie }],
+                startNoteTime: [0, 1],
                 duration: [1, 8],
+                string: 3,
+                fret: 7,
+                modifier: NoteModifier.Tie,
               },
               {
-                notes: [{ string: 3, fret: 2 }],
+                startNoteTime: [1, 8],
                 duration: [1, 8],
+                string: 3,
+                fret: 2,
               },
               {
-                notes: [{ string: 3, fret: 5, modifier: NoteModifier.SlideUp }],
+                startNoteTime: [1, 4],
                 duration: [1, 8],
+                string: 3,
+                fret: 5,
+                modifier: NoteModifier.SlideUp,
               },
               {
-                notes: [{ string: 3, fret: 2, modifier: NoteModifier.SlideDown }],
+                startNoteTime: [3, 8],
                 duration: [1, 8],
+                string: 3,
+                fret: 2,
+                modifier: NoteModifier.SlideDown,
               },
               {
-                notes: [{ string: 3, fret: 4, modifier: NoteModifier.HammerOn }],
+                startNoteTime: [1, 2],
                 duration: [1, 8],
+                string: 3,
+                fret: 4,
+                modifier: NoteModifier.HammerOn,
               },
               {
-                notes: [{ string: 3, fret: 2, modifier: NoteModifier.PullOff }],
+                startNoteTime: [5, 8],
                 duration: [1, 8],
+                string: 3,
+                fret: 2,
+                modifier: NoteModifier.PullOff,
               },
               {
-                notes: [{ string: 3, fret: 5, modifier: NoteModifier.Staccato }],
+                startNoteTime: [3, 4],
                 duration: [1, 4],
+                string: 3,
+                fret: 5,
+                modifier: NoteModifier.Staccato,
               },
             ],
           },
@@ -218,55 +232,55 @@ describe('songsterrUtils', () => {
           // Bar 1
           {
             timeSignature: [1, 4],
-            beats: [{ notes: [{ string: 0, fret: 1 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 1, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 2 1st time
           {
-            beats: [{ notes: [{ string: 0, fret: 2 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 2, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 2 2nd time
           {
-            beats: [{ notes: [{ string: 0, fret: 2 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 2, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 2 3rd time
           {
-            beats: [{ notes: [{ string: 0, fret: 2 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 2, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 3 1st time
           {
-            beats: [{ notes: [{ string: 0, fret: 3 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 3, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 4 1st time
           {
-            beats: [{ notes: [{ string: 0, fret: 4 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 4, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 5 1st time
           {
-            beats: [{ notes: [{ string: 0, fret: 5 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 5, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 3 2nd time
           {
-            beats: [{ notes: [{ string: 0, fret: 3 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 3, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 4 2nd time
           {
-            beats: [{ notes: [{ string: 0, fret: 4 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 4, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 5 2nd time
           {
-            beats: [{ notes: [{ string: 0, fret: 5 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 5, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 6 1st time
           {
-            beats: [{ notes: [], duration: [1, 4] }],
+            notes: [],
           },
           // Bar 6 2nd time
           {
-            beats: [{ notes: [], duration: [1, 4] }],
+            notes: [],
           },
           // Bar 7 after 2 bars rest
           {
-            beats: [{ notes: [{ string: 0, fret: 7 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 7, startNoteTime: [0, 1], duration: [1, 4] }],
           },
         ],
       };
@@ -318,51 +332,51 @@ describe('songsterrUtils', () => {
           // Bar 1
           {
             timeSignature: [1, 4],
-            beats: [{ notes: [{ string: 0, fret: 1 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 1, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 2 1st time
           {
-            beats: [{ notes: [{ string: 0, fret: 2 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 2, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 3 1st time
           {
-            beats: [{ notes: [{ string: 0, fret: 3 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 3, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 2 2nd time
           {
-            beats: [{ notes: [{ string: 0, fret: 2 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 2, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 3 2nd time
           {
-            beats: [{ notes: [{ string: 0, fret: 3 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 3, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 2 3rd time
           {
-            beats: [{ notes: [{ string: 0, fret: 2 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 2, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 4
           {
-            beats: [{ notes: [{ string: 0, fret: 4 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 4, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 2 4th time
           {
-            beats: [{ notes: [{ string: 0, fret: 2 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 2, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 5 1st time
           {
-            beats: [{ notes: [{ string: 0, fret: 5 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 5, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 2 5th time
           {
-            beats: [{ notes: [{ string: 0, fret: 2 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 2, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 5 2nd time
           {
-            beats: [{ notes: [{ string: 0, fret: 5 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 5, startNoteTime: [0, 1], duration: [1, 4] }],
           },
           // Bar 6
           {
-            beats: [{ notes: [{ string: 0, fret: 6 }], duration: [1, 4] }],
+            notes: [{ string: 0, fret: 6, startNoteTime: [0, 1], duration: [1, 4] }],
           },
         ],
       };
@@ -398,18 +412,18 @@ describe('songsterrUtils', () => {
         bars: [
           {
             timeSignature: [6, 8],
-            beats: [{ notes: [{ string: 4, fret: 0 }], duration: [6, 8] }],
+            notes: [{ string: 4, fret: 0, startNoteTime: [0, 1], duration: [6, 8] }],
           },
           {
-            beats: [{ notes: [{ string: 4, fret: 0 }], duration: [6, 8] }],
+            notes: [{ string: 4, fret: 0, startNoteTime: [0, 1], duration: [6, 8] }],
           },
           {
             timeSignature: [4, 4],
-            beats: [{ notes: [{ string: 4, fret: 0 }], duration: [1, 1] }],
+            notes: [{ string: 4, fret: 0, startNoteTime: [0, 1], duration: [1, 1] }],
           },
           {
             timeSignature: [3, 4],
-            beats: [{ notes: [{ string: 4, fret: 0 }], duration: [3, 4] }],
+            notes: [{ string: 4, fret: 0, startNoteTime: [0, 1], duration: [3, 4] }],
           },
         ],
       };

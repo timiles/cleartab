@@ -26,6 +26,13 @@ export function areArraysEqual<T>(...arrays: Array<Array<T>>) {
 }
 
 /**
+ * Typeguard to filter out null or undefined values.
+ */
+export function isNotNullish<TValue>(value: TValue | null | undefined): value is TValue {
+  return value !== null && value !== undefined;
+}
+
+/**
  * Generates an array of numbers from 0 to `size` exclusive.
  */
 export function range(size: number): ReadonlyArray<number> {
