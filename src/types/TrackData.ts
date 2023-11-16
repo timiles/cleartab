@@ -1,6 +1,7 @@
 import { Bar } from './Bar';
 
 export type TrackData = {
+  name: string;
   /**
    * `stringNames` are from top to bottom.
    */

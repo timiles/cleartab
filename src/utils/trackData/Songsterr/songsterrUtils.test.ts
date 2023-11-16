@@ -68,6 +68,7 @@ describe('songsterrUtils', () => {
       };
 
       const expectedTrackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           {
@@ -121,6 +122,7 @@ describe('songsterrUtils', () => {
       };
 
       const expectedTrackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           {
@@ -227,6 +229,7 @@ describe('songsterrUtils', () => {
       };
 
       const expectedTrackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           // Bar 1
@@ -327,6 +330,7 @@ describe('songsterrUtils', () => {
       };
 
       const expectedTrackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           // Bar 1
@@ -408,6 +412,7 @@ describe('songsterrUtils', () => {
       };
 
       const expectedTrackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           {

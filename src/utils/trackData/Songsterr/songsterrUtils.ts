@@ -142,5 +142,5 @@ export function convertSongsterrDataToTrackData(songsterrData: SongsterrData): T
 
   const stringNames = songsterrData.tuning.map((midiNote) => getNoteNameFromMidiNote(midiNote));
 
-  return { stringNames, bars };
+  return { name: songsterrData.instrument, stringNames, bars };
 }

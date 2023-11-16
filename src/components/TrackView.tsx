@@ -96,10 +96,13 @@ export default function TrackView(props: IProps) {
           <Typography component="h2" variant="h4" mb={1}>
             {filename}
           </Typography>
-          <Typography component="h3" variant="h5" mb={1}>
-            {songsterrData.instrument}
-          </Typography>
+          {trackData && (
+            <Typography component="h3" variant="h5" mb={1}>
+              {trackData.name}
+            </Typography>
+          )}
         </Stack>
+
         {tabData && riffs && order && (
           <CopyToClipboardButton tuningTab={tabData.tuningTab} riffs={riffs} order={order} />
         )}

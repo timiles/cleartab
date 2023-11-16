@@ -16,6 +16,7 @@ describe('tabUtils', () => {
   describe('convertTrackDataToTabData', () => {
     it('converts track data as expected', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           {
@@ -64,6 +65,7 @@ E|`.substring(1);
 
     it('handles tuning with an accidental', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'C#'],
         bars: [{ timeSignature: [4, 4], notes: [] }],
       };
@@ -82,6 +84,7 @@ C#|`.substring(1);
 
     it('handles double digit time signature, five strings', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['G', 'D', 'A', 'E', 'B'],
         bars: [
           {
@@ -104,6 +107,7 @@ C#|`.substring(1);
 
     it('handles time signature with one string', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['E'],
         bars: [
           {
@@ -121,6 +125,7 @@ C#|`.substring(1);
 
     it('handles empty bar notes', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['E'],
         bars: [
           {
@@ -139,6 +144,7 @@ C#|`.substring(1);
 
     it('handles note modifiers', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           {
@@ -243,6 +249,7 @@ C#|`.substring(1);
 
     it('handles double digit frets', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['E', 'B', 'G', 'D', 'A', 'E'],
         bars: [
           {
@@ -350,6 +357,7 @@ C#|`.substring(1);
 
     it('handles tuplets', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['E'],
         bars: [
           {
@@ -407,6 +415,7 @@ C#|`.substring(1);
 
     it('handles tuplets (real life example)', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['G', 'D', 'A', 'E'],
         bars: [
           {
@@ -441,6 +450,7 @@ C#|`.substring(1);
 
     it('handles repeating quavers', () => {
       const trackData: TrackData = {
+        name: 'Test',
         stringNames: ['G', 'D', 'A', 'E'],
         bars: [
           {
