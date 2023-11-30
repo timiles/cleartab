@@ -18,12 +18,12 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useCallback, useEffect, useState } from 'react';
-import { getRenderedRiffsMaxLineLength, renderRiffs } from 'utils/tabUtils';
+import { RiffOrder, getRenderedRiffsMaxLineLength, renderRiffs } from 'utils/tabUtils';
 
 interface IProps {
   tuningTab: string;
   riffs: ReadonlyArray<ReadonlyArray<string>>;
-  order: ReadonlyArray<{ riffIndex: number; endingIndex?: number; times: number }>;
+  order: ReadonlyArray<RiffOrder>;
   onClose: () => void;
 }
 

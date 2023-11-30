@@ -1,11 +1,12 @@
 import { Button } from '@mui/material';
 import { useState } from 'react';
+import { RiffOrder } from 'utils/tabUtils';
 import CopyToClipboardDialog from './CopyToClipboardDialog';
 
 interface IProps {
   tuningTab: string;
   riffs: ReadonlyArray<ReadonlyArray<string>>;
-  order: ReadonlyArray<{ riffIndex: number; endingIndex?: number; times: number }>;
+  order: ReadonlyArray<RiffOrder>;
 }
 
 export default function CopyToClipboardButton(props: IProps) {

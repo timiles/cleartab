@@ -5,7 +5,7 @@ import { TabData } from 'types/TabData';
 import { Track } from 'types/Track';
 import { TrackData } from 'types/TrackData';
 import { packItemData, unpackItemData } from 'utils/sequenceUtils';
-import { formatRiffs, getBarTabsWithTimeSignatures } from 'utils/tabUtils';
+import { RiffOrder, formatRiffs, getBarTabsWithTimeSignatures } from 'utils/tabUtils';
 import { getWorkerPool } from 'workers/getWorkerPool';
 import ControlContainer from './ControlContainer';
 import CopyToClipboardButton from './CopyToClipboardButton';
@@ -25,8 +25,7 @@ export default function TrackView(props: IProps) {
   const [trackData, setTrackData] = useState<TrackData>();
   const [tabData, setTabData] = useState<TabData>();
   const [riffs, setRiffs] = useState<ReadonlyArray<ReadonlyArray<string>>>();
-  const [order, setOrder] =
-    useState<ReadonlyArray<{ riffIndex: number; endingIndex?: number; times: number }>>();
+  const [order, setOrder] = useState<ReadonlyArray<RiffOrder>>();
 
   useEffect(() => {
     const pool = getWorkerPool();

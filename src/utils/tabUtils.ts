@@ -20,7 +20,7 @@ type Riff<T = string> = {
   endings?: ReadonlyArray<ReadonlyArray<T>>;
 };
 
-type Order = {
+export type RiffOrder = {
   riffIndex: number;
   endingIndex?: number;
   times: number;
@@ -317,12 +317,8 @@ export function getBarTabsWithTimeSignatures({
   });
 }
 
-export function formatRiffOrderLabel(order: {
-  riffIndex: number;
-  endingIndex?: number;
-  times: number;
-}): string {
-  const { riffIndex, endingIndex, times } = order;
+export function formatRiffOrderLabel(riffOrder: RiffOrder): string {
+  const { riffIndex, endingIndex, times } = riffOrder;
   const riffText = `Riff ${riffIndex + 1}`;
   const endingText = endingIndex !== undefined ? `[${endingIndex + 1}]` : '';
   const timesText = times > 1 ? ` (x${times})` : '';
@@ -433,7 +429,7 @@ function replaceRepeatedBars(
 
 function applyTimeSignatures(
   inputRiffs: ReadonlyArray<Riff<{ barTab: string; timeSignatureTab: string }>>,
-  order: ReadonlyArray<Order>,
+  riffOrder: ReadonlyArray<RiffOrder>,
 ): ReadonlyArray<Riff> {
   // Make an editable copy for output
   const returnRiffs = inputRiffs.map(({ bars, endings }) => ({
@@ -471,7 +467,7 @@ function applyTimeSignatures(
     }
   };
 
-  order.forEach(({ riffIndex, endingIndex, times }) => {
+  riffOrder.forEach(({ riffIndex, endingIndex, times }) => {
     // If riff is repeated (times > 1) then we want to run through twice.
     const repeatTimes = Math.min(2, times);
     for (let repeatTime = 0; repeatTime < repeatTimes; repeatTime += 1) {
@@ -541,23 +537,95 @@ function flattenEndings(inputRiff: Riff): ReadonlyArray<string> {
 
 export function formatRiffs(
   inputRiffs: ReadonlyArray<Riff<{ barTab: string; timeSignatureTab: string }>>,
-  order: ReadonlyArray<Order>,
+  order: ReadonlyArray<RiffOrder>,
 ): ReadonlyArray<ReadonlyArray<string>> {
   return applyTimeSignatures(inputRiffs.map(replaceRepeatedBars), order)
     .map(applyOpeningBarLine)
     .map(flattenEndings);
 }
 
-export function renderOrder(
-  order: ReadonlyArray<{ riffIndex: number; endingIndex?: number; times: number }>,
-): string {
-  return `Order: ${order.map(formatRiffOrderLabel).join(', ')}`;
+function flattenOrderEndings(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray<RiffOrder> {
+  const flattened = new Array<RiffOrder>();
+
+  const riffMaxEndingIndex = new Map<number, number>();
+  riffOrder.forEach((riff) => {
+    if (
+      riff.endingIndex !== undefined &&
+      riff.endingIndex > 0 &&
+      (!riffMaxEndingIndex.has(riff.riffIndex) ||
+        riffMaxEndingIndex.get(riff.riffIndex)! < riff.endingIndex)
+    ) {
+      riffMaxEndingIndex.set(riff.riffIndex, riff.endingIndex);
+    }
+  });
+
+  for (let riffOrderIndex = 0; riffOrderIndex < riffOrder.length; riffOrderIndex += 1) {
+    const riff = riffOrder[riffOrderIndex];
+    if (riff.endingIndex === 0 && riff.times === 1) {
+      const maxEndingIndex = riffMaxEndingIndex.get(riff.riffIndex)!;
+
+      // See if the next riffs' endings form a complete riff
+      let isCompleteRiff = true;
+      for (let endingIndex = 1; endingIndex <= maxEndingIndex; endingIndex += 1) {
+        const testRiff = riffOrder[riffOrderIndex + endingIndex];
+        if (
+          !testRiff ||
+          testRiff.riffIndex !== riff.riffIndex ||
+          testRiff.endingIndex !== endingIndex ||
+          testRiff.times !== 1
+        ) {
+          isCompleteRiff = false;
+          break;
+        }
+      }
+
+      if (isCompleteRiff) {
+        flattened.push({ riffIndex: riff.riffIndex, times: 1 });
+        riffOrderIndex += maxEndingIndex;
+      } else {
+        flattened.push(riff);
+      }
+    } else {
+      flattened.push(riff);
+    }
+  }
+
+  return flattened;
+}
+
+function flattenOrderRepeats(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray<RiffOrder> {
+  const flattened: Array<RiffOrder> = [riffOrder[0]];
+
+  let lastRiff = riffOrder[0];
+  riffOrder.forEach((nextRiff, index) => {
+    if (index > 0) {
+      if (
+        nextRiff.riffIndex === lastRiff.riffIndex &&
+        nextRiff.endingIndex === lastRiff.endingIndex
+      ) {
+        lastRiff.times += nextRiff.times;
+      } else {
+        flattened.push(nextRiff);
+        lastRiff = nextRiff;
+      }
+    }
+  });
+
+  return flattened;
+}
+
+function flattenOrder(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray<RiffOrder> {
+  return flattenOrderRepeats(flattenOrderEndings(riffOrder));
+}
+
+export function renderOrder(riffOrder: ReadonlyArray<RiffOrder>): string {
+  return `Order: ${flattenOrder(riffOrder).map(formatRiffOrderLabel).join(', ')}`;
 }
 
 export function renderRiffs(
   tuningTab: string,
   riffs: ReadonlyArray<ReadonlyArray<string>>,
-  order: ReadonlyArray<{ riffIndex: number; endingIndex?: number; times: number }>,
+  riffOrder: ReadonlyArray<RiffOrder>,
   options?: {
     maxLineLength?: number;
     hideTuning?: boolean;
@@ -635,7 +703,7 @@ export function renderRiffs(
     systemTabs.push(joinTabs(...currentSystemTabs));
   }
 
-  systemTabs.push(renderOrder(order));
+  systemTabs.push(renderOrder(riffOrder));
   return systemTabs.join('\n\n');
 }
 

@@ -4,11 +4,13 @@ import { TrackData } from 'types/TrackData';
 import { range } from './arrayUtils';
 import { simplifyNoteTime } from './noteTimeUtils';
 import {
+  RiffOrder,
   convertTrackDataToTabData,
   formatRiffLabel,
   formatRiffOrderLabel,
   formatRiffs,
   joinTabs,
+  renderOrder,
   renderRiffs,
 } from './tabUtils';
 
@@ -891,6 +893,46 @@ C#|`.substring(1);
 ‖4/4:1---|3/4:1--|2--‖4/4:3---|‖4---|5---‖6---|‖4/4:7---|8---‖3/4:9--|`.substring(1);
 
       expect(output).toStrictEqual(expectedOutput);
+    });
+  });
+
+  describe('renderOrder', () => {
+    it('renders simple order as expected', () => {
+      const riffOrder: ReadonlyArray<RiffOrder> = [
+        { riffIndex: 0, times: 1 },
+        { riffIndex: 1, times: 2 },
+        { riffIndex: 0, times: 3 },
+      ];
+
+      expect(renderOrder(riffOrder)).toBe('Order: Riff 1, Riff 2 (x2), Riff 1 (x3)');
+    });
+
+    it('renders repeated riffs as expected', () => {
+      const riffOrder: ReadonlyArray<RiffOrder> = [
+        { riffIndex: 0, times: 1 },
+        { riffIndex: 0, times: 2 },
+        { riffIndex: 0, times: 3 },
+      ];
+
+      expect(renderOrder(riffOrder)).toBe('Order: Riff 1 (x6)');
+    });
+
+    it('renders endings as expected', () => {
+      const riffOrder: ReadonlyArray<RiffOrder> = [
+        { riffIndex: 0, endingIndex: 0, times: 1 },
+        { riffIndex: 0, endingIndex: 1, times: 1 },
+        { riffIndex: 1, endingIndex: 0, times: 2 },
+        { riffIndex: 0, endingIndex: 1, times: 1 },
+        { riffIndex: 1, endingIndex: 0, times: 1 },
+        { riffIndex: 1, endingIndex: 1, times: 1 },
+        { riffIndex: 1, endingIndex: 0, times: 1 },
+        { riffIndex: 1, endingIndex: 1, times: 1 },
+        { riffIndex: 1, endingIndex: 0, times: 1 },
+      ];
+
+      expect(renderOrder(riffOrder)).toBe(
+        'Order: Riff 1, Riff 2[1] (x2), Riff 1[2], Riff 2 (x2), Riff 2[1]',
+      );
     });
   });
 

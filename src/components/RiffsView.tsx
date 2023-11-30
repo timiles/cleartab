@@ -1,11 +1,11 @@
 /* eslint-disable react/no-array-index-key */
 import { Box, Stack, Typography } from '@mui/material';
-import { formatRiffLabel, renderOrder } from 'utils/tabUtils';
+import { RiffOrder, formatRiffLabel, renderOrder } from 'utils/tabUtils';
 
 interface IProps {
   tuning: string;
   riffs: ReadonlyArray<ReadonlyArray<string>>;
-  order: ReadonlyArray<{ riffIndex: number; endingIndex?: number; times: number }>;
+  order: ReadonlyArray<RiffOrder>;
 }
 
 export default function RiffsView(props: IProps) {
