@@ -7,7 +7,8 @@ import { findLowestCommonMultiple } from './mathUtils';
 import { areEquivalentNoteTimes, isNotePlaying } from './noteTimeUtils';
 
 const BAR_LINE = '|';
-const REPEAT_BAR_LINE = '‖';
+const REPEAT_START = '|:';
+const REPEAT_END = ':|';
 const DOUBLE_SIZE_NOTE_BRACKET = '⌐¬';
 const REPEAT_BAR = '%';
 const EMPTY_NOTE = '-';
@@ -495,14 +496,16 @@ function applyOpeningBarLine(inputRiff: Riff): Riff {
 
   const returnBars = bars.slice();
 
-  const firstBarLineCharacter = isArrayNotEmpty(endings) ? REPEAT_BAR_LINE : BAR_LINE;
+  const openingBarLine = isArrayNotEmpty(endings) ? REPEAT_START : BAR_LINE;
   returnBars[0] = returnBars[0]
     .split('\n')
-    .map(
-      (line) =>
-        // Handle extra line for annotations: only prepend bar line if line also ends with a bar line
-        `${line.endsWith(BAR_LINE) ? firstBarLineCharacter : ' '}${line}`,
-    )
+    .map((line) => {
+      // Handle extra line for annotations: only prepend bar line if line also ends with a bar line
+      const lineStart = line.endsWith(BAR_LINE)
+        ? openingBarLine
+        : ' '.repeat(openingBarLine.length);
+      return `${lineStart}${line}`;
+    })
     .join('\n');
 
   return { bars: returnBars, endings };
@@ -519,20 +522,29 @@ function applyTabMinLineLength(tab: string, minLineLength: number): string {
 function flattenEndings(inputRiff: Riff): ReadonlyArray<string> {
   const { bars, endings } = inputRiff;
 
-  return bars.concat(
-    ...(endings?.flatMap((endingBars, endingIndex) =>
-      endingBars.map((bar, barIndex) => {
-        const endingLabel = formatEndingLabel(endingBars, barIndex, endingIndex);
-        let formattedBar = endingLabel ? `${endingLabel}\n` : '';
-        formattedBar += applyTabMinLineLength(bar, endingLabel.length);
-        // If last bar of ending, except if it's the last ending, then use repeat bar lines
-        if (barIndex === endingBars.length - 1 && endingIndex !== endings!.length - 1) {
-          formattedBar = formattedBar.replaceAll(BAR_LINE, REPEAT_BAR_LINE);
-        }
-        return formattedBar;
-      }),
-    ) ?? []),
+  if (!isArrayNotEmpty(endings)) {
+    return bars;
+  }
+
+  const endingsWithFixedBarLines = endings.map((endingBars, endingIndex) =>
+    endingBars.map((bar, barIndex) => {
+      // If last bar of ending, except if it's the last ending, then use repeat bar lines
+      const isLastBarOfRepeatEnding =
+        barIndex === endingBars.length - 1 && endingIndex !== endings!.length - 1;
+      return isLastBarOfRepeatEnding ? bar.replaceAll(BAR_LINE, REPEAT_END) : bar;
+    }),
   );
+
+  const endingsWithLabels = endingsWithFixedBarLines.map((endingBars, endingIndex) =>
+    endingBars.map((bar, barIndex) => {
+      const endingLabel = formatEndingLabel(endingBars, barIndex, endingIndex);
+      return (
+        (endingLabel ? `${endingLabel}\n` : '') + applyTabMinLineLength(bar, endingLabel.length)
+      );
+    }),
+  );
+
+  return bars.concat(...endingsWithLabels.flatMap((endingBars) => endingBars));
 }
 
 export function formatRiffs(
