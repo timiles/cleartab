@@ -644,7 +644,7 @@ export function renderRiffs(
     avoidSplittingRiffs?: boolean;
   },
 ): string {
-  const { maxLineLength = 84, hideTuning = false, avoidSplittingRiffs = false } = options ?? {};
+  const { maxLineLength = 94, hideTuning = false, avoidSplittingRiffs = false } = options ?? {};
 
   const tuningTabIfShown = hideTuning ? '' : tuningTab;
 

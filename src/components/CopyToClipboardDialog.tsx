@@ -30,7 +30,7 @@ interface IProps {
 export default function CopyToClipboardDialog(props: IProps) {
   const { tuningTab, riffs, order, onClose } = props;
 
-  const [maxLineLength, setMaxLineLength] = useState(84);
+  const [maxLineLength, setMaxLineLength] = useState(94);
   const setMaxLineLengthDebounced = useCallback(debounce(setMaxLineLength, 500), []);
 
   const [hideTuning, setHideTuning] = useState(false);
