@@ -239,12 +239,6 @@ export function convertTrackDataToTabData({ stringNames, bars }: TrackData): Tab
         } else {
           const noteOnLineBelow = notesStartingOnBeat.find((n) => n.string === stringNumber + 1);
           if (noteOnLineBelow) {
-            // const isNoteBelowRepeatQuaver = getIsRepeatQuaver(
-            //   shortestBeatType,
-            //   noteOnLineBelow,
-            //   previousNotesByLine[lineIndex + 1],
-            // );
-            // if (!isNoteBelowRepeatQuaver) {
             const modifier = getNoteModifierText(noteOnLineBelow, noteSize);
             if (modifier) {
               lines[lineIndex] += modifier;
@@ -253,7 +247,6 @@ export function convertTrackDataToTabData({ stringNames, bars }: TrackData): Tab
             } else {
               lines[lineIndex] += getSpacerText(lineIndex, lineOffset).repeat(noteSize);
             }
-            // }
           } else if (
             previousNoteOnString &&
             isNotePlaying(previousNoteOnString, [beatIndex, shortestBeatType])
