@@ -339,9 +339,9 @@ C#|`.substring(1);
                 fret: 12,
                 modifier: NoteModifier.Tie,
               },
-              { startNoteTime: [1, 2], duration: [1, 8], string: 2, fret: 10 },
+              { startNoteTime: [1, 2], duration: [1, 8], string: 2, fret: 9 },
               { startNoteTime: [1, 2], duration: [1, 8], string: 4, fret: 8 },
-              { startNoteTime: [5, 8], duration: [1, 8], string: 2, fret: 11 },
+              { startNoteTime: [5, 8], duration: [1, 8], string: 2, fret: 10 },
               { startNoteTime: [5, 8], duration: [1, 8], string: 4, fret: 9 },
               { startNoteTime: [3, 4], duration: [1, 4], string: 2, fret: 12 },
               { startNoteTime: [3, 4], duration: [1, 4], string: 4, fret: 10 },
@@ -354,8 +354,8 @@ C#|`.substring(1);
 ⌐¬           ⌐¬/¬⌐\\            
 14~~~|-------121712|~~~-------|
 -----|----h¬-------|-----⌐¬⌐¬-|
------|⌐.-012~------|----ю1112~|
------|12~----------|----------|
+-----|⌐.-012~------|----91012~|
+-----|12~----------|-------⌐¬-|
 -----|12~----------|----8-910~|
 -----|-0~----------|----------|`.substring(1);
 

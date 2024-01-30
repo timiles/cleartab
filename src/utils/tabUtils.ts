@@ -36,19 +36,15 @@ function getSpacerText(lineIndex: number, lineOffset: number): string {
 }
 
 function getNoteSize({ fret, modifier }: Note): number {
-  // Fret 10 will be rendered as ю, so size of 1. Frets 11 and above have size 2.
-  return fret >= 11 && modifier !== NoteModifier.Tie ? 2 : 1;
+  return fret >= 10 && modifier !== NoteModifier.Tie ? 2 : 1;
 }
 
 function getNoteText({ fret, modifier }: Note, noteSize: number): string {
   if (modifier === NoteModifier.Tie) {
     return '~'.repeat(noteSize);
   }
-  if (modifier === NoteModifier.Dead) {
-    return '×'.padStart(noteSize, EMPTY_NOTE);
-  }
-  const fretText = fret === 10 && noteSize === 1 ? 'ю' : fret.toString();
-  return fretText.padStart(noteSize, EMPTY_NOTE);
+  const noteText = modifier === NoteModifier.Dead ? '×' : fret.toString();
+  return noteText.padStart(noteSize, EMPTY_NOTE);
 }
 
 function getNoteModifierText({ modifier }: Note, noteSize: number = 1): string | null {
