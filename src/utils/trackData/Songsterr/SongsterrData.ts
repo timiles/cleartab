@@ -3,6 +3,7 @@ export type SongsterrNote = {
   string?: number;
   fret?: number;
   tie?: boolean;
+  dead?: boolean;
   hp?: boolean;
   slide?: string;
   staccato?: boolean;

@@ -44,6 +44,9 @@ function getNoteText({ fret, modifier }: Note, noteSize: number): string {
   if (modifier === NoteModifier.Tie) {
     return '~'.repeat(noteSize);
   }
+  if (modifier === NoteModifier.Dead) {
+    return '×'.padStart(noteSize, EMPTY_NOTE);
+  }
   const fretText = fret === 10 && noteSize === 1 ? 'ю' : fret.toString();
   return fretText.padStart(noteSize, EMPTY_NOTE);
 }
@@ -51,6 +54,8 @@ function getNoteText({ fret, modifier }: Note, noteSize: number): string {
 function getNoteModifierText({ modifier }: Note, noteSize: number = 1): string | null {
   if (modifier !== undefined) {
     switch (modifier) {
+      case NoteModifier.Dead:
+        return null;
       case NoteModifier.HammerOn:
         return 'h'.padEnd(noteSize, DOUBLE_SIZE_NOTE_BRACKET[1]);
       case NoteModifier.PullOff:

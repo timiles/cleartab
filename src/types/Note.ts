@@ -1,6 +1,7 @@
 import { NoteTime } from './NoteTime';
 
 export enum NoteModifier {
+  Dead,
   HammerOn,
   PullOff,
   SlideDown,

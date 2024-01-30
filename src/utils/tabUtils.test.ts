@@ -226,9 +226,16 @@ C#|`.substring(1);
               },
               {
                 startNoteTime: [1, 2],
-                duration: [1, 2],
+                duration: [3, 8],
                 string: 2,
                 fret: 4,
+              },
+              {
+                startNoteTime: [7, 8],
+                duration: [1, 8],
+                string: 2,
+                fret: 0,
+                modifier: NoteModifier.Dead,
               },
             ],
           },
@@ -239,7 +246,7 @@ C#|`.substring(1);
       /\\          
 -----272|~~~-----|
 ---h----|--------|
-.-02~---|----4~~~|
+.-02~---|----4~~×|
 2~------|--------|
 2~------|--------|
 0~------|--------|`.substring(1);

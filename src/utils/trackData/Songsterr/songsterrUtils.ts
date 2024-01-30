@@ -19,6 +19,9 @@ function getNoteModifier(note: SongsterrNote, nextNote?: SongsterrNote): NoteMod
   if (note.slide !== undefined && note.fret !== undefined && nextNote?.fret !== undefined) {
     return note.fret <= nextNote.fret ? NoteModifier.SlideUp : NoteModifier.SlideDown;
   }
+  if (note.dead) {
+    return NoteModifier.Dead;
+  }
   if (note.staccato) {
     return NoteModifier.Staccato;
   }
