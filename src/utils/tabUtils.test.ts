@@ -423,14 +423,38 @@ C#|`.substring(1);
           {
             timeSignature: [6, 8],
             notes: [
-              { startNoteTime: [0, 1], duration: [1, 8], string: 3, fret: 0, modifier: 4 },
-              { startNoteTime: [1, 8], duration: [1, 8], string: 3, fret: 0, modifier: 4 },
+              {
+                startNoteTime: [0, 1],
+                duration: [1, 8],
+                string: 3,
+                fret: 0,
+                modifier: NoteModifier.Staccato,
+              },
+              {
+                startNoteTime: [1, 8],
+                duration: [1, 8],
+                string: 3,
+                fret: 0,
+                modifier: NoteModifier.Staccato,
+              },
               { startNoteTime: [1, 4], duration: [1, 16], string: 3, fret: 0 },
               { startNoteTime: [5, 16], duration: [1, 16], string: 2, fret: 7 },
               // semiquaver triplets (24) means a semiquaver (16) is 1.5x the smallest duration
               { startNoteTime: [3, 8], duration: [1, 24], string: 1, fret: 5 },
-              { startNoteTime: [5, 12], duration: [1, 24], string: 1, fret: 6, modifier: 0 },
-              { startNoteTime: [11, 24], duration: [1, 24], string: 1, fret: 5, modifier: 1 },
+              {
+                startNoteTime: [5, 12],
+                duration: [1, 24],
+                string: 1,
+                fret: 6,
+                modifier: NoteModifier.HammerOn,
+              },
+              {
+                startNoteTime: [11, 24],
+                duration: [1, 24],
+                string: 1,
+                fret: 5,
+                modifier: NoteModifier.PullOff,
+              },
               { startNoteTime: [1, 2], duration: [1, 16], string: 2, fret: 7 },
               { startNoteTime: [9, 16], duration: [1, 16], string: 3, fret: 7 },
               { startNoteTime: [5, 8], duration: [1, 16], string: 3, fret: 8 },
