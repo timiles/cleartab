@@ -938,6 +938,20 @@ C#|`.substring(1);
       expect(renderOrder(riffOrder)).toBe('Order: Riff 1, Riff 2 (x2), Riff 1 (x3)');
     });
 
+    it('renders rests as expected', () => {
+      const riffOrder: ReadonlyArray<RiffOrder> = [
+        { riffIndex: 0, times: 1 },
+        { isRest: true, bars: 1 },
+        { riffIndex: 1, times: 2 },
+        { isRest: true, bars: 2 },
+        { riffIndex: 0, times: 3 },
+      ];
+
+      expect(renderOrder(riffOrder)).toBe(
+        'Order: Riff 1, 1 bar rest, Riff 2 (x2), 2 bars rest, Riff 1 (x3)',
+      );
+    });
+
     it('renders repeated riffs as expected', () => {
       const riffOrder: ReadonlyArray<RiffOrder> = [
         { riffIndex: 0, times: 1 },

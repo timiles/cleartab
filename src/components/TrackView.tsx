@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { TabData } from 'types/TabData';
 import { Track } from 'types/Track';
 import { TrackData } from 'types/TrackData';
+import { isNotNullish } from 'utils/arrayUtils';
 import { packItemData, unpackItemData } from 'utils/sequenceUtils';
-import { RiffOrder, formatRiffs, getBarTabsWithTimeSignatures } from 'utils/tabUtils';
+import { RiffOrder, formatRiffs, getBarTabsWithTimeSignatures, isRestBar } from 'utils/tabUtils';
 import { getWorkerPool } from 'workers/getWorkerPool';
 import ControlContainer from './ControlContainer';
 import CopyToClipboardButton from './CopyToClipboardButton';
@@ -50,8 +51,7 @@ export default function TrackView(props: IProps) {
       pool
         .findSequences(getBarTabsWithTimeSignatures(tabData).map(packItemData))
         .then((result) => {
-          const inputRiffs = result.sequences.map(({ items, endings }, sequenceIndex) => ({
-            riffIndex: sequenceIndex,
+          const inputRiffs = result.sequences.map(({ items, endings }) => ({
             bars: items
               .map(unpackItemData)
               .map(([barTab, timeSignatureTab]) => ({ barTab, timeSignatureTab })),
@@ -62,13 +62,37 @@ export default function TrackView(props: IProps) {
             ),
           }));
 
-          const sequenceOrder = result.order.map(({ sequenceIndex, endingIndex, times }) => ({
-            riffIndex: sequenceIndex,
-            endingIndex,
-            times,
-          }));
+          const indexesOfRests = inputRiffs
+            .map(({ bars, endings }, sequenceIndex) =>
+              !endings && bars.length === 1 && isRestBar(bars[0].barTab) ? sequenceIndex : null,
+            )
+            .filter(isNotNullish);
 
-          setRiffs(formatRiffs(inputRiffs, sequenceOrder));
+          const sequenceOrder: ReadonlyArray<RiffOrder> = result.order.map(
+            ({ sequenceIndex, endingIndex, times }) => {
+              if (indexesOfRests.includes(sequenceIndex)) {
+                return {
+                  isRest: true,
+                  bars: times,
+                };
+              }
+              return {
+                isRest: false,
+                riffIndex:
+                  // Adjust riff index for any skipped rest-only riffs
+                  sequenceIndex - indexesOfRests.filter((index) => index < sequenceIndex).length,
+                endingIndex,
+                times,
+              };
+            },
+          );
+
+          const formattedRiffs = formatRiffs(
+            inputRiffs.filter((_, sequenceIndex) => !indexesOfRests.includes(sequenceIndex)),
+            sequenceOrder,
+          );
+
+          setRiffs(formattedRiffs);
           setOrder(sequenceOrder);
 
           setStatus(undefined);

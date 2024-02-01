@@ -21,11 +21,17 @@ type Riff<T = string> = {
   endings?: ReadonlyArray<ReadonlyArray<T>>;
 };
 
-export type RiffOrder = {
-  riffIndex: number;
-  endingIndex?: number;
-  times: number;
-};
+export type RiffOrder =
+  | {
+      isRest?: false;
+      riffIndex: number;
+      endingIndex?: number;
+      times: number;
+    }
+  | {
+      isRest: true;
+      bars: number;
+    };
 
 function getBarLineText(lineIndex: number, lineOffset: number): string {
   return lineIndex < lineOffset ? ' ' : BAR_LINE;
@@ -312,7 +318,16 @@ export function getBarTabsWithTimeSignatures({
   });
 }
 
+export function isRestBar(barTab: string): boolean {
+  return barTab.replaceAll(/[|-\s]*/g, '') === '';
+}
+
 export function formatRiffOrderLabel(riffOrder: RiffOrder): string {
+  if (riffOrder.isRest) {
+    const { bars } = riffOrder;
+    return `${bars} bar${bars > 1 ? 's' : ''} rest`;
+  }
+
   const { riffIndex, endingIndex, times } = riffOrder;
   const riffText = `Riff ${riffIndex + 1}`;
   const endingText = endingIndex !== undefined ? `[${endingIndex + 1}]` : '';
@@ -462,21 +477,25 @@ function applyTimeSignatures(
     }
   };
 
-  riffOrder.forEach(({ riffIndex, endingIndex, times }) => {
-    // If riff is repeated (times > 1) then we want to run through twice.
-    const repeatTimes = Math.min(2, times);
-    for (let repeatTime = 0; repeatTime < repeatTimes; repeatTime += 1) {
-      const barsLength = inputRiffs[riffIndex].bars.length;
+  riffOrder.forEach((riff) => {
+    if (!riff.isRest) {
+      const { riffIndex, endingIndex, times } = riff;
 
-      for (let barIndex = 0; barIndex < barsLength; barIndex += 1) {
-        applyTimeSignatureIfNeeded(riffIndex, undefined, barIndex);
-      }
+      // If riff is repeated (times > 1) then we want to run through twice.
+      const repeatTimes = Math.min(2, times);
+      for (let repeatTime = 0; repeatTime < repeatTimes; repeatTime += 1) {
+        const barsLength = inputRiffs[riffIndex].bars.length;
 
-      if (endingIndex !== undefined) {
-        const endingLength = inputRiffs[riffIndex].endings![endingIndex].length;
+        for (let barIndex = 0; barIndex < barsLength; barIndex += 1) {
+          applyTimeSignatureIfNeeded(riffIndex, undefined, barIndex);
+        }
 
-        for (let barIndex = 0; barIndex < endingLength; barIndex += 1) {
-          applyTimeSignatureIfNeeded(riffIndex, endingIndex, barIndex);
+        if (endingIndex !== undefined) {
+          const endingLength = inputRiffs[riffIndex].endings![endingIndex].length;
+
+          for (let barIndex = 0; barIndex < endingLength; barIndex += 1) {
+            applyTimeSignatureIfNeeded(riffIndex, endingIndex, barIndex);
+          }
         }
       }
     }
@@ -556,6 +575,7 @@ function flattenOrderEndings(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray
   const riffMaxEndingIndex = new Map<number, number>();
   riffOrder.forEach((riff) => {
     if (
+      !riff.isRest &&
       riff.endingIndex !== undefined &&
       riff.endingIndex > 0 &&
       (!riffMaxEndingIndex.has(riff.riffIndex) ||
@@ -567,7 +587,7 @@ function flattenOrderEndings(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray
 
   for (let riffOrderIndex = 0; riffOrderIndex < riffOrder.length; riffOrderIndex += 1) {
     const riff = riffOrder[riffOrderIndex];
-    if (riff.endingIndex === 0 && riff.times === 1) {
+    if (!riff.isRest && riff.endingIndex === 0 && riff.times === 1) {
       const maxEndingIndex = riffMaxEndingIndex.get(riff.riffIndex)!;
 
       // See if the next riffs' endings form a complete riff
@@ -576,6 +596,7 @@ function flattenOrderEndings(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray
         const testRiff = riffOrder[riffOrderIndex + endingIndex];
         if (
           !testRiff ||
+          testRiff.isRest ||
           testRiff.riffIndex !== riff.riffIndex ||
           testRiff.endingIndex !== endingIndex ||
           testRiff.times !== 1
@@ -605,15 +626,23 @@ function flattenOrderRepeats(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray
   let currentTimes = 0;
   for (let riffIndex = 0; riffIndex < riffOrder.length; riffIndex += 1) {
     const currentRiff = riffOrder[riffIndex];
-    currentTimes += currentRiff.times;
     const nextRiff = riffOrder[riffIndex + 1];
-    if (
-      !nextRiff ||
-      currentRiff.riffIndex !== nextRiff.riffIndex ||
-      currentRiff.endingIndex !== nextRiff.endingIndex
-    ) {
-      flattened.push({ ...currentRiff, times: currentTimes });
+
+    if (currentRiff.isRest) {
+      flattened.push(currentRiff);
       currentTimes = 0;
+    } else {
+      currentTimes += currentRiff.times;
+
+      if (
+        !nextRiff ||
+        nextRiff.isRest ||
+        currentRiff.riffIndex !== nextRiff.riffIndex ||
+        currentRiff.endingIndex !== nextRiff.endingIndex
+      ) {
+        flattened.push({ ...currentRiff, times: currentTimes });
+        currentTimes = 0;
+      }
     }
   }
 
