@@ -600,22 +600,22 @@ function flattenOrderEndings(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray
 }
 
 function flattenOrderRepeats(riffOrder: ReadonlyArray<RiffOrder>): ReadonlyArray<RiffOrder> {
-  const flattened: Array<RiffOrder> = [riffOrder[0]];
+  const flattened = new Array<RiffOrder>();
 
-  let lastRiff = riffOrder[0];
-  riffOrder.forEach((nextRiff, index) => {
-    if (index > 0) {
-      if (
-        nextRiff.riffIndex === lastRiff.riffIndex &&
-        nextRiff.endingIndex === lastRiff.endingIndex
-      ) {
-        lastRiff.times += nextRiff.times;
-      } else {
-        flattened.push(nextRiff);
-        lastRiff = nextRiff;
-      }
+  let currentTimes = 0;
+  for (let riffIndex = 0; riffIndex < riffOrder.length; riffIndex += 1) {
+    const currentRiff = riffOrder[riffIndex];
+    currentTimes += currentRiff.times;
+    const nextRiff = riffOrder[riffIndex + 1];
+    if (
+      !nextRiff ||
+      currentRiff.riffIndex !== nextRiff.riffIndex ||
+      currentRiff.endingIndex !== nextRiff.endingIndex
+    ) {
+      flattened.push({ ...currentRiff, times: currentTimes });
+      currentTimes = 0;
     }
-  });
+  }
 
   return flattened;
 }
