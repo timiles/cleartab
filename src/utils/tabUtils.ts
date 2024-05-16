@@ -699,7 +699,10 @@ export function renderRiffs(
         }
         // Check again in case the above condition changed things
         if (currentLineLength + nextItemLength > maxLineLength) {
-          systemStarts.push({ riffIndex, barIndex });
+          // Avoid pushing the same system start twice
+          if (barIndex !== 0 || riffIndex !== systemStarts.at(-1)?.riffIndex) {
+            systemStarts.push({ riffIndex, barIndex });
+          }
           currentLineLength = barLength;
         }
       } else {

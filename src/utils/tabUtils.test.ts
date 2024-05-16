@@ -1043,10 +1043,8 @@ Order: Riff 1, Riff 2 (x2)`.substring(1);
       });
 
       const expectedOutput = `
-E|
-
-[Riff 1]  
-|4/4:1---|
+  [Riff 1]  
+E||4/4:1---|
 
 2---|
 
