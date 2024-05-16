@@ -642,15 +642,44 @@ C#|`.substring(1);
               })),
             ],
           },
+          {
+            timeSignature: [2, 4],
+            notes: [
+              {
+                startNoteTime: simplifyNoteTime([0, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 2,
+                fret: 3,
+              },
+              {
+                startNoteTime: simplifyNoteTime([1, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 2,
+                fret: 4,
+              },
+              {
+                startNoteTime: simplifyNoteTime([2, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 2,
+                fret: 4,
+              },
+              {
+                startNoteTime: simplifyNoteTime([3, 8]),
+                duration: [1, 8] as NoteTime,
+                string: 2,
+                fret: 3,
+              },
+            ],
+          },
         ],
       };
 
       const expectedTab = `
-                                                                ⌐¬    
-.-|----|--------|------|----|-----|------|----|----|--------|⌐¬-17’--|
-5”|5”5”|01010101|------|--.-|-----|------|----|----|--------|15”-----|
-3”|3”--|00000000|3”5353|3”3”|3’’5”|3’5”3’|35”3|3333|3’3~~3~~|--------|
---|----|--------|------|----|-----|------|----|----|--------|--------|`.substring(1);
+                                                                ⌐¬         
+.-|----|--------|------|----|-----|------|----|----|--------|⌐¬-17’--|----|
+5”|5”5”|01010101|------|--.-|-----|------|----|----|--------|15”-----|----|
+3”|3”--|00000000|3”5353|3”3”|3’’5”|3’5”3’|35”3|3333|3’3~~3~~|--------|34’3|
+--|----|--------|------|----|-----|------|----|----|--------|--------|----|`.substring(1);
 
       const tabData = convertTrackDataToTabData(trackData);
       const tab = joinTabs(...tabData.barTabs);

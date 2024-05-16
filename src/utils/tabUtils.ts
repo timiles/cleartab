@@ -181,6 +181,8 @@ export function convertTrackDataToTabData({ stringNames, bars }: TrackData): Tab
 
       repeatQuaverCountThreshold =
         (bar.timeSignature[0] / bar.timeSignature[1]) * (QUAVER_BEAT_TYPE / 2) - 1;
+      // Check threshold isn't 1 as that would want REPEAT_QUAVER, not REPEAT_QUAVERS
+      repeatQuaverCountThreshold = Math.max(repeatQuaverCountThreshold, 2);
     }
 
     const topStringHasAnnotations = bar.notes
