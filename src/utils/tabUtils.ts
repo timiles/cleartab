@@ -122,7 +122,11 @@ function getIsRepeatQuaver(
     return false;
   }
 
-  if (!notes.every((note) => areEquivalentNoteTimes(note.duration, [1, QUAVER_BEAT_TYPE]))) {
+  const everyNoteIsAQuaver = notes.every(
+    ({ duration, modifier }) =>
+      modifier !== NoteModifier.Tie && areEquivalentNoteTimes(duration, [1, QUAVER_BEAT_TYPE]),
+  );
+  if (!everyNoteIsAQuaver) {
     return false;
   }
 

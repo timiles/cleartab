@@ -181,10 +181,17 @@ C#|`.substring(1);
               },
               {
                 startNoteTime: [3, 8],
-                duration: [1, 4],
+                duration: [1, 8],
                 string: 2,
                 fret: 2,
                 modifier: NoteModifier.HammerOn,
+              },
+              {
+                startNoteTime: [1, 2],
+                duration: [1, 8],
+                string: 2,
+                fret: 0,
+                modifier: NoteModifier.Dead,
               },
               {
                 startNoteTime: [5, 8],
@@ -208,34 +215,82 @@ C#|`.substring(1);
               },
             ],
           },
+        ],
+      };
+
+      const expectedTab = `
+      /\\ 
+-----272|
+---h----|
+.-02×---|
+2~------|
+2~------|
+0~------|`.substring(1);
+
+      const tabData = convertTrackDataToTabData(trackData);
+      const tab = joinTabs(...tabData.barTabs);
+      expect(tab).toBe(expectedTab);
+    });
+
+    it('handles ties', () => {
+      const trackData: TrackData = {
+        name: 'Test',
+        stringNames: ['E'],
+        bars: [
           {
+            timeSignature: [4, 4],
             notes: [
               {
                 startNoteTime: [0, 1],
                 duration: [1, 4],
+                string: 0,
+                fret: 7,
+              },
+              {
+                startNoteTime: [1, 4],
+                duration: [1, 4],
+                string: 0,
+                fret: 7,
+                modifier: NoteModifier.Tie,
+              },
+              {
+                startNoteTime: [1, 2],
+                duration: [1, 4],
+                string: 0,
+                fret: 2,
+                modifier: NoteModifier.SlideDown,
+              },
+              {
+                startNoteTime: [3, 4],
+                duration: [1, 4],
+                string: 0,
+                fret: 2,
+                modifier: NoteModifier.Tie,
+              },
+            ],
+          },
+          {
+            notes: [
+              {
+                startNoteTime: [0, 1],
+                duration: [1, 8],
+                string: 0,
+                fret: 2,
+                modifier: NoteModifier.Tie,
+              },
+              {
+                startNoteTime: [1, 8],
+                duration: [1, 8],
                 string: 0,
                 fret: 2,
                 modifier: NoteModifier.Tie,
               },
               {
                 startNoteTime: [1, 4],
-                duration: [1, 8],
+                duration: [1, 4],
                 string: 0,
                 fret: 2,
                 modifier: NoteModifier.Tie,
-              },
-              {
-                startNoteTime: [1, 2],
-                duration: [3, 8],
-                string: 2,
-                fret: 4,
-              },
-              {
-                startNoteTime: [7, 8],
-                duration: [1, 8],
-                string: 2,
-                fret: 0,
-                modifier: NoteModifier.Dead,
               },
             ],
           },
@@ -243,13 +298,8 @@ C#|`.substring(1);
       };
 
       const expectedTab = `
-      /\\          
------272|~~~-----|
----h----|--------|
-.-02~---|----4~~×|
-2~------|--------|
-2~------|--------|
-0~------|--------|`.substring(1);
+  \\           
+7~2~|~~~~----|`.substring(1);
 
       const tabData = convertTrackDataToTabData(trackData);
       const tab = joinTabs(...tabData.barTabs);
